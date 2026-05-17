@@ -179,17 +179,14 @@ export async function POST(
       );
 
     return new Response(
-      pdfBuffer,
-      {
-        headers: {
-          "Content-Type":
-            "application/pdf",
-
-          "Content-Disposition":
-            `inline; filename=invoice-${order?.orderId}.pdf`,
-        },
-      }
-    );
+  new Uint8Array(pdfBuffer),
+  {
+    headers: {
+      "Content-Type":
+        "application/pdf",
+    },
+  }
+);
   } catch (error) {
     console.log(error);
 
