@@ -68,19 +68,10 @@ export async function GET() {
         });
 
         // WHATSAPP
-        await sendWhatsApp({
-          target:
-            order.phone,
-
-          message: `
-Pesanan kamu sudah diterima 🎉
-
-Order:
-${order.orderId}
-
-Terima kasih sudah belanja di Khaira Shop ❤️
-          `,
-        });
+        await sendWhatsApp(
+  order.phone,
+  `Pesanan ${order.orderId} sedang dikirim`
+);
 
         // EMAIL
         if (order.email) {
