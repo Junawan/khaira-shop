@@ -46,8 +46,8 @@ export async function POST(
 
     pdf.on(
       "data",
-      (chunk) =>
-        chunks.push(chunk)
+      (chunk: Buffer) =>
+  chunks.push(chunk)
     );
 
     const barcode =
