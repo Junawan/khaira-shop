@@ -4,7 +4,7 @@ import adminDb from "@/lib/firebase-admin";
 
 const PDFDocument = require("pdfkit");
 
-import bwipjs from "bwip-js";
+const bwipjs = require("bwip-js");
 
 export async function POST(
   req: Request
