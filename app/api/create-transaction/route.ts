@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import midtransClient from "midtrans-client";
+const midtransClient = require("midtrans-client");
 
 import adminDb from "@/lib/firebase-admin";
 
