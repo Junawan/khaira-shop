@@ -21,7 +21,11 @@ import { useCartStore } from "@/store/cart";
 type Variant = {
   name: string;
 
+  value: string;
+
   price: number;
+
+  stock?: number;
 };
 
 type Product = {
@@ -166,8 +170,8 @@ export default function ProductDetailPage() {
     name:
       product.name +
       (selectedVariant
-        ? ` - ${selectedVariant.name}`
-        : ""),
+  ? ` - ${selectedVariant.value}`
+  : ""),
 
     price: Number(finalPrice),
 
@@ -256,25 +260,25 @@ export default function ProductDetailPage() {
                 <div className="flex flex-wrap gap-3">
 
                   {product.variants.map(
-                    (variant, index) => (
-                      <button
-                        key={index}
-                        onClick={() =>
-                          setSelectedVariant(
-                            variant
-                          )
-                        }
-                        className={`px-5 py-3 rounded-xl border transition ${
-                          selectedVariant?.name ===
-                          variant.name
-                            ? "bg-black text-white border-black"
-                            : "bg-white border-gray-300"
-                        }`}
-                      >
-                        {variant.name}
-                      </button>
-                    )
-                  )}
+  (variant, index) => (
+    <button
+      key={index}
+      onClick={() =>
+        setSelectedVariant(
+          variant
+        )
+      }
+      className={`px-5 py-3 rounded-xl border transition ${
+        selectedVariant?.value ===
+        variant.value
+          ? "bg-black text-white border-black"
+          : "bg-white border-gray-300"
+      }`}
+    >
+      {variant.value}
+    </button>
+  )
+)}
 
                 </div>
 

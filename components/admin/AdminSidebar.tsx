@@ -25,16 +25,6 @@ const menus = [
     href:
       "/admin/products/import",
   },
-
-  {
-    name: "Customers",
-    href: "/admin/customers",
-  },
-
-  {
-    name: "Analytics",
-    href: "/admin/analytics",
-  },
 ];
 
 export default function AdminSidebar() {

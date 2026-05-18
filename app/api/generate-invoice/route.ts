@@ -1,19 +1,33 @@
 import { NextResponse } from "next/server";
 
-import adminDb from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebase-admin";
 
-const PDFDocument = require("pdfkit");
+import PDFDocument from "pdfkit";
 
 const bwipjs = require("bwip-js");
 
-export async function POST(
+export async function GET(
   req: Request
 ) {
   try {
-    const body = await req.json();
+
+    const { searchParams } =
+      new URL(req.url);
 
     const orderId =
-      body.orderId;
+      searchParams.get("orderId");
+
+    if (!orderId) {
+      return NextResponse.json(
+        {
+          error:
+            "Order ID kosong",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     const docSnap =
       await adminDb
@@ -21,25 +35,15 @@ export async function POST(
         .doc(orderId)
         .get();
 
-    if (!docSnap.exists) {
-      return NextResponse.json(
-        {
-          error:
-            "Order not found",
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
     const order =
       docSnap.data();
 
-    const pdf =
-      new PDFDocument({
-        margin: 40,
-      });
+    const pdf = new PDFDocument({
+  margin: 40,
+  font:
+    process.cwd() +
+    "/public/fonts/Arial.ttf",
+});
 
     const chunks: Uint8Array[] =
       [];
@@ -55,7 +59,7 @@ export async function POST(
         bcid: "code128",
 
         text:
-          order?.trackingNumber ||
+          order?.airwayBillId ||
           order?.orderId,
 
         scale: 3,
@@ -77,22 +81,50 @@ export async function POST(
     pdf.moveDown();
 
     pdf
-      .fontSize(14)
-      .text(
-        `Order ID: ${order?.orderId}`
-      );
+  .fontSize(14)
+  .text(
+    `Order ID: ${order?.orderId}`
+  );
 
-    pdf.text(
-      `Customer: ${order?.customerName}`
-    );
+pdf.moveDown(0.5);
 
-    pdf.text(
-      `Phone: ${order?.phone}`
-    );
+pdf
+  .fontSize(16)
+  .text("PENGIRIM", {
+    underline: true,
+  });
 
-    pdf.text(
-      `Address: ${order?.address}`
-    );
+pdf.text(
+  "Khaira Shop"
+);
+
+pdf.text(
+  "Bogor, Jawa Barat"
+);
+
+pdf.text(
+  "WA: 0857-1025-5464"
+);
+
+pdf.moveDown();
+
+pdf
+  .fontSize(16)
+  .text("PENERIMA", {
+    underline: true,
+  });
+
+pdf.text(
+  `Nama: ${order?.customerName}`
+);
+
+pdf.text(
+  `Phone: ${order?.phone}`
+);
+
+pdf.text(
+  `Alamat: ${order?.address}`
+);
 
     pdf.moveDown();
 
@@ -153,7 +185,7 @@ export async function POST(
     pdf
       .fontSize(12)
       .text(
-        order?.trackingNumber ||
+        order?.airwayBillId ||
           order?.orderId,
         {
           align: "center",
@@ -182,9 +214,12 @@ export async function POST(
   new Uint8Array(pdfBuffer),
   {
     headers: {
-      "Content-Type":
-        "application/pdf",
-    },
+  "Content-Type":
+    "application/pdf",
+
+  "Content-Disposition":
+    `inline; filename=invoice-${orderId}.pdf`,
+},
   }
 );
   } catch (error) {

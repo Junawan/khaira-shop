@@ -1,163 +1,190 @@
 import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase-admin";
 
 const midtransClient = require("midtrans-client");
 
-import adminDb from "@/lib/firebase-admin";
+export const runtime = "nodejs";
 
-const db = adminDb;
+// =========================
+// MIDTRANS
+// =========================
+
 const snap = new midtransClient.Snap({
   isProduction: false,
 
-  serverKey:
-    process.env
-      .MIDTRANS_SERVER_KEY!,
+  serverKey: process.env.MIDTRANS_SERVER_KEY,
 });
 
-export async function POST(
-  req: Request
-) {
+// =========================
+// CREATE TRANSACTION
+// =========================
+
+export async function POST(req: Request) {
   try {
     const body = await req.json();
 
+    console.log("CHECKOUT BODY:", body);
+
+    // =========================
+    // ORDER ID
+    // =========================
+
     const orderId = `ORDER-${Date.now()}`;
 
-    const subtotal =
-      body.items.reduce(
-        (
-          acc: number,
-          item: any
-        ) =>
-          acc +
-          item.price *
-            item.quantity,
-        0
-      );
+    // =========================
+    // TOTAL
+    // =========================
 
-    const shippingCost =
-      body.shippingCost || 0;
+    const subtotal = body.items.reduce(
+      (acc: number, item: any) =>
+        acc + Number(item.price) * Number(item.quantity),
+      0
+    );
 
-    const total =
-      subtotal + shippingCost;
+    const shippingCost = Number(body.shippingCost || 0);
 
-    const itemDetails =
-      body.items.map(
-        (item: any) => ({
-          id: item.id,
+    const total = subtotal + shippingCost;
 
-          name: item.name,
+    // =========================
+    // ITEM DETAILS
+    // =========================
 
-          quantity:
-            item.quantity,
+    const itemDetails = body.items.map((item: any) => ({
+      id: item.id || "product",
 
-          price: item.price,
-        })
-      );
+      price: Math.round(item.price),
 
-    // TAMBAHKAN ONGKIR
+      quantity: Number(item.quantity || 1),
+
+      name:
+  item.name.length > 50
+    ? item.name.substring(0, 50)
+    : item.name,
+    }));
+
+    // ONGKIR
     if (shippingCost > 0) {
       itemDetails.push({
         id: "shipping",
 
-        name: "Ongkos Kirim",
+        price: shippingCost,
 
         quantity: 1,
 
-        price: shippingCost,
+        name: "Ongkos Kirim",
       });
     }
 
-    // SIMPAN ORDER KE FIRESTORE
-    await db.collection("orders").add({
-  orderId,
+    // =========================
+    // SAVE TO FIRESTORE
+    // =========================
 
-  // TAMBAHKAN INI
-  midtransOrderId: orderId,
+    const orderRef = await adminDb.collection("orders").add({
+      orderId,
 
-  customerName:
-    body.name || "",
+      midtransOrderId: orderId,
 
-  phone:
-    body.phone || "",
+      customerName: body.name || "",
 
-  address:
-    body.address || "",
+      email: body.email || "",
 
-  postalCode:
-    body.postalCode || "",
+      phone: body.phone || "",
 
-  note:
-    body.note || "",
+      address: body.address || "",
 
-email:
-  body.email || "",
+      postalCode: body.postalCode || "",
 
-  items:
-    body.items || [],
+      note: body.note || "",
 
-  subtotal:
-    subtotal || 0,
+      items: body.items || [],
 
-  shippingCost:
-    shippingCost || 0,
+      subtotal,
 
-  total:
-    total || 0,
+      shippingCost,
 
-  courier:
-    body.courier || "",
+      total,
 
-  courierService:
-    body.courierService || "",
+      courier: body.courier || "",
 
-  paymentStatus:
-    "pending",
+      courierService: body.courierService || "",
 
-  orderStatus:
-    "pending",
+      paymentStatus: "pending",
 
-  createdAt:
-    new Date(),
-});
+      orderStatus: "pending",
+
+      airwayBillId: "",
+
+      trackingId: "",
+
+      trackingLink: "",
+
+      shippingType: "",
+
+      createdAt: new Date(),
+
+      updatedAt: new Date(),
+    });
+
+    console.log("FIRESTORE ORDER ID:", orderRef.id);
+
+    // =========================
+    // MIDTRANS PARAMETER
+    // =========================
 
     const parameter = {
       transaction_details: {
         order_id: orderId,
 
-        gross_amount: total,
+        gross_amount: Math.round(total),
       },
 
       customer_details: {
-        first_name:
-          body.name,
+        first_name: body.name,
 
-        phone:
-          body.phone,
+        email: body.email,
+
+        phone: body.phone,
       },
 
-      item_details:
-        itemDetails,
+      item_details: itemDetails,
     };
 
-    const transaction =
-      await snap.createTransaction(
-        parameter
-      );
+    console.log("MIDTRANS PARAMETER:", parameter);
+
+    // =========================
+    // CREATE TRANSACTION
+    // =========================
+
+    const transaction = await snap.createTransaction(parameter);
+
+    console.log("MIDTRANS RESPONSE:", transaction);
 
     return NextResponse.json({
-      token:
-        transaction.token,
+      success: true,
+
+      token: transaction.token,
+
+      redirect_url: transaction.redirect_url,
+
+      orderId,
+
+      firestoreDocId: orderRef.id,
     });
   } catch (error: any) {
-  console.log("MIDTRANS ERROR:", error);
+    console.log("MIDTRANS ERROR:", error);
 
-  return NextResponse.json(
-    {
-      error: error.message || "Midtrans Error",
-      detail: error,
-    },
-    {
-      status: 500,
-    }
-  );
-}
+    return NextResponse.json(
+  {
+    success: false,
+
+    message:
+      error instanceof Error
+        ? error.message
+        : "Midtrans error",
+  },
+  {
+    status: 500,
+  }
+);
+  }
 }

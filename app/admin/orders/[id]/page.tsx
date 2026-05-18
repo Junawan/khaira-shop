@@ -157,28 +157,24 @@ export default function AdminOrderDetailPage() {
           },
 
           body: JSON.stringify({
-            customerName:
-              order.customerName,
+  docId: order.id,
 
-            phone:
-              order.phone,
+  orderId: order.orderId,
 
-            email:
-              order.email,
+  customerName:
+    order.customerName,
 
-            orderId:
-              order.orderId,
+  phone: order.phone,
 
-            status,
+  address: order.address,
 
-            trackingNumber,
+  courier: order.courier,
 
-            courier:
-              order.courier,
+  courierService:
+    order.courierService,
 
-            courierService:
-              order.courierService,
-          }),
+  items: order.items || [],
+}),
         }
       );
 

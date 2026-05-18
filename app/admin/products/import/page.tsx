@@ -6,15 +6,29 @@ import * as XLSX from "xlsx";
 
 type ProductRow = {
   name: string;
+
   type: string;
+
   category?: string;
+
   description?: string;
+
   image?: string;
 
   price?: number;
+
   stock?: number;
 
+  weight?: number;
+
+  packageLength?: number;
+
+  packageWidth?: number;
+
+  packageHeight?: number;
+
   variantName?: string;
+
   variantValue?: string;
 };
 
@@ -102,6 +116,100 @@ export default function ImportProductsPage() {
       }
     };
 
+    const downloadSingleTemplate = () => {
+  const data = [
+    {
+      name: "Loyang Pai Bali",
+      type: "single",
+      category: "Loyang",
+      description:
+        "Loyang premium anti lengket",
+      image:
+        "https://yourdomain.com/produk.jpg",
+      price: 85000,
+      stock: 10,
+      weight: 500,
+      packageLength: 20,
+      packageWidth: 20,
+      packageHeight: 10,
+    },
+  ];
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(data);
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Single Product"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "template-produk-single.xlsx"
+  );
+};
+
+const downloadVariantTemplate = () => {
+  const data = [
+    {
+      name: "Hijab Paris",
+      type: "variant",
+      category: "Hijab",
+      description:
+        "Hijab premium adem",
+      image:
+        "https://yourdomain.com/hijab.jpg",
+      variantName: "Warna",
+      variantValue: "Hitam",
+      price: 75000,
+      stock: 5,
+      weight: 300,
+      packageLength: 15,
+      packageWidth: 15,
+      packageHeight: 3,
+    },
+
+    {
+      name: "Hijab Paris",
+      type: "variant",
+      category: "Hijab",
+      description:
+        "Hijab premium adem",
+      image:
+        "https://yourdomain.com/hijab.jpg",
+      variantName: "Warna",
+      variantValue: "Cream",
+      price: 75000,
+      stock: 8,
+      weight: 300,
+      packageLength: 15,
+      packageWidth: 15,
+      packageHeight: 3,
+    },
+  ];
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(data);
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Variant Product"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "template-produk-variant.xlsx"
+  );
+};
+
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">
 
@@ -112,6 +220,24 @@ export default function ImportProductsPage() {
           <h1 className="text-4xl font-bold mb-8">
             Import Produk Excel
           </h1>
+
+          <div className="flex flex-wrap gap-4 mb-6">
+
+  <button
+    onClick={downloadSingleTemplate}
+    className="bg-blue-600 text-white px-5 py-3 rounded-2xl"
+  >
+    Download Template Produk Satuan
+  </button>
+
+  <button
+    onClick={downloadVariantTemplate}
+    className="bg-purple-600 text-white px-5 py-3 rounded-2xl"
+  >
+    Download Template Produk Varian
+  </button>
+
+</div>
 
           <input
             type="file"

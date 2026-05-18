@@ -1,330 +1,375 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import Link from "next/link";
 
 import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import {
-  addDoc,
   collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
 } from "firebase/firestore";
 
-import { storage, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 
-import { v4 as uuidv4 } from "uuid";
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Search,
+} from "lucide-react";
 
-export default function AddProductPage() {
-  const [name, setName] = useState("");
+type Product = {
+  id: string;
 
-  const [description, setDescription] =
-    useState("");
+  name: string;
 
-  const [price, setPrice] = useState("");
+  price: number;
 
-  const [weight, setWeight] =
-    useState("");
+  stock: number;
 
-  const [length, setLength] =
-    useState("");
+  category?: string;
 
-  const [width, setWidth] =
-    useState("");
+  image?: string;
 
-  const [height, setHeight] =
-    useState("");
+  active?: boolean;
 
-  const [image, setImage] =
-    useState<File | null>(null);
-    const [variants, setVariants] =
-  useState([
-    {
-      name: "",
-      price: "",
-    },
-  ]);
+  featured?: boolean;
+};
+
+export default function AdminProductsPage() {
+  const [products, setProducts] =
+    useState<Product[]>([]);
 
   const [loading, setLoading] =
-    useState(false);
+    useState(true);
 
-    const addVariant = () => {
-  setVariants([
-    ...variants,
+  const [search, setSearch] =
+    useState("");
 
-    {
-      name: "",
-      price: "",
-    },
-  ]);
-};
+  // REALTIME
+  useEffect(() => {
+    const q = query(
+      collection(db, "products"),
+      orderBy("createdAt", "desc")
+    );
 
-const updateVariant = (
-  index: number,
-  field: string,
-  value: string
-) => {
-  const updated = [...variants];
+    const unsubscribe =
+      onSnapshot(q, (snapshot) => {
+        const data: Product[] =
+          snapshot.docs.map(
+            (doc) => ({
+              id: doc.id,
+              ...(doc.data() as Omit<
+                Product,
+                "id"
+              >),
+            })
+          );
 
-  updated[index] = {
-    ...updated[index],
+        setProducts(data);
 
-    [field]: value,
-  };
+        setLoading(false);
+      });
 
-  setVariants(updated);
-};
-  const handleUpload = async () => {
-    try {
-      if (!image) {
-        alert("Pilih gambar");
+    return () => unsubscribe();
+  }, []);
+
+  // DELETE
+  const handleDelete =
+    async (id: string) => {
+      const confirmDelete =
+        confirm(
+          "Hapus produk?"
+        );
+
+      if (!confirmDelete)
         return;
+
+      try {
+        await deleteDoc(
+          doc(
+            db,
+            "products",
+            id
+          )
+        );
+
+        alert(
+          "Produk berhasil dihapus"
+        );
+      } catch (error) {
+        console.log(error);
+
+        alert(
+          "Gagal hapus produk"
+        );
       }
+    };
 
-      setLoading(true);
+  // FILTER
+  const filteredProducts =
+    products.filter((product) =>
+      product.name
+        ?.toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+    );
 
-      // Upload image
-      const imageRef = ref(
-        storage,
-        `products/${uuidv4()}`
-      );
-
-      await uploadBytes(imageRef, image);
-
-      const imageUrl =
-        await getDownloadURL(imageRef);
-
-      // Save firestore
-      await addDoc(
-        collection(db, "products"),
-        {
-          name,
-
-          description,
-
-          image: imageUrl,
-
-          price: Number(price),
-
-variants: variants.map((v) => ({
-  name: v.name,
-
-  price: Number(v.price),
-})),
-
-          weight: Number(weight),
-
-          length: Number(length),
-
-          width: Number(width),
-
-          height: Number(height),
-
-          createdAt: new Date(),
-        }
-      );
-
-      alert("Produk berhasil ditambahkan");
-
-      setName("");
-
-      setDescription("");
-
-      setPrice("");
-
-      setWeight("");
-
-      setLength("");
-
-      setWidth("");
-
-      setHeight("");
-
-      setImage(null);
-    } catch (error) {
-      console.error(error);
-
-      alert("Gagal upload produk");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="p-10">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">
 
-      <div className="max-w-3xl mx-auto bg-white rounded-3xl p-8 shadow-sm">
+      <div className="max-w-7xl mx-auto">
 
-        <h1 className="text-3xl font-bold mb-8">
-          Tambah Produk
-        </h1>
+        {/* HEADER */}
 
-        <div className="space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-10">
 
-          {/* Nama */}
-          <input
-            type="text"
-            placeholder="Nama produk"
-            value={name}
-            onChange={(e) =>
-              setName(e.target.value)
-            }
-            className="w-full border border-gray-300 rounded-xl px-4 py-3"
-          />
+          <div>
+            <h1 className="text-4xl font-bold">
+              Products
+            </h1>
 
-          {/* Deskripsi */}
-          <textarea
-            placeholder="Deskripsi produk"
-            value={description}
-            onChange={(e) =>
-              setDescription(e.target.value)
-            }
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 h-40"
-          />
-
-          {/* Harga */}
-          <input
-            type="number"
-            placeholder="Harga"
-            value={price}
-            onChange={(e) =>
-              setPrice(e.target.value)
-            }
-            className="w-full border border-gray-300 rounded-xl px-4 py-3"
-          />
-
-          {/* Berat */}
-          <input
-            type="number"
-            placeholder="Berat gram"
-            value={weight}
-            onChange={(e) =>
-              setWeight(e.target.value)
-            }
-            className="w-full border border-gray-300 rounded-xl px-4 py-3"
-          />
-
-          {/* Dimensi */}
-          <div className="grid grid-cols-3 gap-4">
-
-            <input
-              type="number"
-              placeholder="Panjang cm"
-              value={length}
-              onChange={(e) =>
-                setLength(e.target.value)
+            <p className="text-gray-500 mt-2">
+              Total:
+              {" "}
+              {
+                products.length
               }
-              className="border border-gray-300 rounded-xl px-4 py-3"
-            />
-
-            <input
-              type="number"
-              placeholder="Lebar cm"
-              value={width}
-              onChange={(e) =>
-                setWidth(e.target.value)
-              }
-              className="border border-gray-300 rounded-xl px-4 py-3"
-            />
-
-            <input
-              type="number"
-              placeholder="Tinggi cm"
-              value={height}
-              onChange={(e) =>
-                setHeight(e.target.value)
-              }
-              className="border border-gray-300 rounded-xl px-4 py-3"
-            />
-
+              {" "}
+              produk
+            </p>
           </div>
 
-{/* VARIANT */}
-
-<div className="space-y-4">
-
-  <div className="flex items-center justify-between">
-
-    <h2 className="font-semibold text-lg">
-      Varian Produk
-    </h2>
-
-    <button
-      type="button"
-      onClick={addVariant}
-      className="bg-gray-200 px-4 py-2 rounded-xl"
-    >
-      + Tambah Varian
-    </button>
-
-  </div>
-
-  {variants.map((variant, index) => (
-    <div
-      key={index}
-      className="grid grid-cols-2 gap-4"
-    >
-
-      <input
-        type="text"
-        placeholder="Nama varian"
-        value={variant.name}
-        onChange={(e) =>
-          updateVariant(
-            index,
-            "name",
-            e.target.value
-          )
-        }
-        className="border border-gray-300 rounded-xl px-4 py-3"
-      />
-
-      <input
-        type="number"
-        placeholder="Harga varian"
-        value={variant.price}
-        onChange={(e) =>
-          updateVariant(
-            index,
-            "price",
-            e.target.value
-          )
-        }
-        className="border border-gray-300 rounded-xl px-4 py-3"
-      />
-
-    </div>
-  ))}
-
-</div>
-
-          {/* Upload */}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) =>
-              setImage(
-                e.target.files?.[0] || null
-              )
-            }
-            className="w-full"
-          />
-
-          {/* Button */}
-          <button
-            onClick={handleUpload}
-            disabled={loading}
-            className="w-full bg-black text-white py-4 rounded-xl hover:opacity-90"
+          <Link
+            href="/admin/products/create"
           >
-            {loading
-              ? "Uploading..."
-              : "Tambah Produk"}
-          </button>
+            <button className="bg-black text-white px-5 py-4 rounded-2xl flex items-center gap-2">
+
+              <Plus size={20} />
+
+              Tambah Produk
+
+            </button>
+          </Link>
 
         </div>
+
+        {/* SEARCH */}
+
+        <div className="bg-white rounded-3xl p-4 shadow-sm mb-8 flex items-center gap-3">
+
+          <Search
+            className="text-gray-400"
+            size={20}
+          />
+
+          <input
+            type="text"
+            placeholder="Cari produk..."
+            value={search}
+            onChange={(e) =>
+              setSearch(
+                e.target.value
+              )
+            }
+            className="w-full outline-none"
+          />
+
+        </div>
+
+        {/* EMPTY */}
+
+        {filteredProducts.length ===
+        0 ? (
+          <div className="bg-white rounded-3xl p-10 text-center shadow-sm">
+
+            Tidak ada produk
+
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+            {filteredProducts.map(
+              (product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-3xl overflow-hidden shadow-sm"
+                >
+
+                  {/* IMAGE */}
+
+                  <div className="aspect-square bg-gray-100">
+
+                    {product.image ? (
+                      <img
+                        src={
+                          product.image
+                        }
+                        alt={
+                          product.name
+                        }
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+
+                        No Image
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* CONTENT */}
+
+                  <div className="p-5">
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+
+                      {product.active ? (
+                        <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full">
+
+                          Active
+
+                        </span>
+                      ) : (
+                        <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
+
+                          Hidden
+
+                        </span>
+                      )}
+
+                      {product.featured && (
+                        <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">
+
+                          Featured
+
+                        </span>
+                      )}
+
+                      {product.stock <=
+                        5 && (
+                        <span className="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full">
+
+                          Low Stock
+
+                        </span>
+                      )}
+
+                    </div>
+
+                    <h2 className="font-bold text-xl line-clamp-2">
+
+                      {
+                        product.name
+                      }
+
+                    </h2>
+
+                    <p className="text-gray-500 mt-2">
+
+                      {
+                        product.category ||
+                        "-"
+                      }
+
+                    </p>
+
+                    <div className="mt-5 space-y-2">
+
+                      <div className="flex justify-between">
+
+                        <span className="text-gray-500">
+                          Harga
+                        </span>
+
+                        <span className="font-bold">
+                          Rp
+                          {product.price?.toLocaleString()}
+                        </span>
+
+                      </div>
+
+                      <div className="flex justify-between">
+
+                        <span className="text-gray-500">
+                          Stock
+                        </span>
+
+                        <span className="font-bold">
+
+                          {
+                            product.stock
+                          }
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                    {/* ACTION */}
+
+                    <div className="mt-6 flex gap-3">
+
+                      <Link
+                        href={`/admin/products/${product.id}/edit`}
+                        className="flex-1"
+                      >
+
+                        <button className="w-full bg-black text-white py-3 rounded-2xl flex items-center justify-center gap-2">
+
+                          <Pencil size={18} />
+
+                          Edit
+
+                        </button>
+
+                      </Link>
+
+                      <button
+                        onClick={() =>
+                          handleDelete(
+                            product.id
+                          )
+                        }
+                        className="bg-red-500 text-white px-5 rounded-2xl flex items-center justify-center"
+                      >
+
+                        <Trash2 size={18} />
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              )
+            )}
+
+          </div>
+        )}
+
       </div>
+
     </main>
   );
 }
