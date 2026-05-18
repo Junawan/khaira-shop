@@ -17,6 +17,12 @@ import {
 
 import { db } from "@/lib/firebase";
 
+import { signOut } from "firebase/auth";
+
+import { auth } from "@/lib/firebase";
+
+import { useRouter } from "next/navigation";
+
 type OrderItem = {
   id: string;
 
@@ -63,6 +69,8 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] =
     useState<Order[]>([]);
 
+    const router = useRouter();
+
   const [loading, setLoading] =
     useState(true);
 
@@ -104,6 +112,19 @@ export default function AdminOrdersPage() {
 
     return () => unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+  try {
+    await signOut(auth);
+
+    document.cookie =
+      "admin-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+
+    router.push("/login-admin");
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   // UPDATE STATUS
   const updateStatus = async (
@@ -255,6 +276,13 @@ export default function AdminOrdersPage() {
           {/* FILTER */}
 
           <div className="flex flex-wrap gap-3">
+
+            <button
+      onClick={handleLogout}
+      className="bg-red-500 text-white px-5 py-3 rounded-2xl"
+    >
+      Logout
+    </button>
 
             {[
               "all",
