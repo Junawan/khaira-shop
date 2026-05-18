@@ -220,7 +220,7 @@ export default function CheckoutPage() {
                 );
 
                 window.location.href =
-                  "/";
+  `/payment-success?order_id=${data.orderId}`;
               },
 
             onPending:
