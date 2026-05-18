@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import adminDb from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebase-admin";
 
 import { resend } from "@/lib/resend";
 
