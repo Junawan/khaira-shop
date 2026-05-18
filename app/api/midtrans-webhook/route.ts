@@ -10,7 +10,21 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    let body: any = {};
+
+    try {
+      body = await req.json();
+    } catch (err) {
+      console.log(
+        "INVALID JSON BODY"
+      );
+
+      return NextResponse.json({
+        success: true,
+        message:
+          "Webhook received",
+      });
+    }
 
     console.log(
       "MIDTRANS WEBHOOK:",
@@ -23,17 +37,16 @@ export async function POST(req: Request) {
     const transactionStatus =
       body.transaction_status;
 
-    console.log(
-      "ORDER ID:",
-      orderId
-    );
+    // TEST NOTIFICATION MIDTRANS
+    if (!orderId) {
+      return NextResponse.json({
+        success: true,
+        message:
+          "Webhook test success",
+      });
+    }
 
-    console.log(
-      "TRANSACTION STATUS:",
-      transactionStatus
-    );
-
-    // cari order
+    // CARI ORDER
     const snapshot =
       await adminDb
         .collection("orders")
@@ -49,15 +62,11 @@ export async function POST(req: Request) {
         "ORDER NOT FOUND"
       );
 
-      return NextResponse.json(
-        {
-          error:
-            "Order not found",
-        },
-        {
-          status: 404,
-        }
-      );
+      return NextResponse.json({
+        success: true,
+        message:
+          "Order not found",
+      });
     }
 
     const orderDoc =
@@ -66,19 +75,27 @@ export async function POST(req: Request) {
     const orderData =
       orderDoc.data();
 
-    console.log(
-      "ORDER FOUND:",
-      orderData
-    );
-
-    // hanya saat payment sukses
-    if (
+    // PAYMENT SUCCESS
+    const isPaid =
       transactionStatus ===
         "settlement" ||
       transactionStatus ===
-        "capture"
-    ) {
-      // update firestore
+        "capture";
+
+    if (isPaid) {
+      // CEGAH DUPLIKAT
+      if (
+        orderData.paymentStatus ===
+        "paid"
+      ) {
+        return NextResponse.json({
+          success: true,
+          message:
+            "Already paid",
+        });
+      }
+
+      // UPDATE ORDER
       await orderDoc.ref.update({
         paymentStatus:
           "paid",
@@ -111,23 +128,35 @@ export async function POST(req: Request) {
                   "Pembayaran Berhasil",
 
                 html: `
-                <h2>Pembayaran Berhasil ✅</h2>
+                  <h2>
+                    Pembayaran Berhasil ✅
+                  </h2>
 
-                <p>Halo ${orderData.customerName}</p>
+                  <p>
+                    Halo ${orderData.customerName}
+                  </p>
 
-                <p>Pesanan kamu berhasil dibayar.</p>
+                  <p>
+                    Pesanan berhasil dibayar.
+                  </p>
 
-                <p><strong>Order ID:</strong> ${orderData.orderId}</p>
+                  <p>
+                    Order ID:
+                    ${orderData.orderId}
+                  </p>
 
-                <p><strong>Total:</strong> Rp${(
-                  orderData.total || 0
-                ).toLocaleString()}</p>
-              `,
+                  <p>
+                    Total:
+                    Rp${(
+                      orderData.total || 0
+                    ).toLocaleString()}
+                  </p>
+                `,
               }
             );
 
           console.log(
-            "EMAIL RESULT:",
+            "EMAIL:",
             emailResult
           );
         } catch (err) {
@@ -159,7 +188,7 @@ Rp${(
             );
 
           console.log(
-            "WA RESULT:",
+            "WA:",
             waResult
           );
         } catch (err) {
@@ -182,11 +211,12 @@ Rp${(
 
     return NextResponse.json(
       {
+        success: true,
         error:
-          "Webhook error",
+          "Webhook handled",
       },
       {
-        status: 500,
+        status: 200,
       }
     );
   }

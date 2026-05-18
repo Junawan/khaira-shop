@@ -2,38 +2,45 @@ import { NextResponse } from "next/server";
 
 import adminDb from "@/lib/firebase-admin";
 
-import { resend } from "@/lib/resend";
-
 import { sendWhatsApp } from "@/lib/fonnte";
 
-export async function POST(
-  req: Request
-) {
+import { resend } from "@/lib/resend";
+
+export const runtime = "nodejs";
+
+export async function POST(req: Request) {
   try {
     const body = await req.json();
 
     const {
-      orderId,
+      docId,
       status,
       trackingNumber,
     } = body;
 
-    // CARI ORDER
-    const snapshot =
-      await adminDb
-        .collection("orders")
-        .where(
-          "orderId",
-          "==",
-          orderId
-        )
-        .get();
-
-    if (snapshot.empty) {
+    if (!docId || !status) {
       return NextResponse.json(
         {
-          error:
-            "Order not found",
+          error: "Missing data",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const orderRef =
+      adminDb
+        .collection("orders")
+        .doc(docId);
+
+    const snapshot =
+      await orderRef.get();
+
+    if (!snapshot.exists) {
+      return NextResponse.json(
+        {
+          error: "Order not found",
         },
         {
           status: 404,
@@ -41,135 +48,213 @@ export async function POST(
       );
     }
 
-    const orderDoc =
-      snapshot.docs[0];
+    const order =
+      snapshot.data();
 
-    const orderRef =
-      orderDoc.ref;
+    if (!order) {
+      return NextResponse.json(
+        {
+          error: "Order empty",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
 
-    const orderData =
-      orderDoc.data();
-
-    // UPDATE STATUS
+    // UPDATE FIRESTORE
     await orderRef.update({
       orderStatus: status,
 
       trackingNumber:
-        trackingNumber || "",
+        trackingNumber ||
+        order.trackingNumber ||
+        "",
 
       updatedAt:
         new Date(),
     });
 
-    const trackingUrl = `http://localhost:3000/tracking/${orderData.orderId}`;
+    const trackingUrl = `https://ks25.my.id/tracking/${order.orderId}`;
 
-    // ======================
-    // STATUS SHIPPED
-    // ======================
+    // =========================
+    // STATUS: PACKED
+    // =========================
 
-    if (status === "shipped") {
-      // EMAIL
-      if (orderData.email) {
-        try {
-          await resend.emails.send({
-            from:
-              "Khaira Shop <onboarding@resend.dev>",
-
-            to: orderData.email,
-
-            subject:
-              "Pesanan Dikirim",
-
-            html: `
-              <div style="font-family:sans-serif">
-
-                <h2>
-                  Pesanan Dikirim 🚚
-                </h2>
-
-                <p>
-                  Halo ${
-                    orderData.customerName
-                  }
-                </p>
-
-                <p>
-                  Pesanan kamu sedang dikirim.
-                </p>
-
-                <p>
-                  Resi:
-                  <strong>
-                    ${trackingNumber}
-                  </strong>
-                </p>
-
-                <a
-                  href="${trackingUrl}"
-                  style="
-                    display:inline-block;
-                    margin-top:20px;
-                    background:black;
-                    color:white;
-                    padding:12px 20px;
-                    text-decoration:none;
-                    border-radius:10px;
-                  "
-                >
-                  Tracking Pesanan
-                </a>
-
-              </div>
-            `,
-          });
-        } catch (error) {
-          console.log(
-            "EMAIL ERROR:",
-            error
-          );
-        }
-      }
-
+    if (status === "packed") {
       // WHATSAPP
-      if (orderData.phone) {
-        try {
-          await sendWhatsApp(
-            orderData.phone,
-            `Pesanan dikirim 🚚
+      if (order.phone) {
+        await sendWhatsApp(
+          order.phone,
+          `Pesanan kamu sedang diproses 📦
 
 Order:
-${orderData.orderId}
+${order.orderId}
 
-Resi:
-${trackingNumber}
+Toko sedang menyiapkan paket kamu ❤️`
+        );
+      }
 
-Tracking:
-${trackingUrl}`
-          );
-        } catch (error) {
-          console.log(
-            "WA ERROR:",
-            error
-          );
-        }
+      // EMAIL
+      if (order.email) {
+        await resend.emails.send({
+          from:
+            "Khaira Shop <noreply@ks25.my.id>",
+
+          to: order.email,
+
+          subject:
+            "Pesanan Sedang Diproses",
+
+          html: `
+            <div style="font-family:sans-serif">
+              <h2>
+                Pesanan Diproses 📦
+              </h2>
+
+              <p>
+                Halo ${order.customerName},
+              </p>
+
+              <p>
+                Pesanan kamu sedang kami siapkan.
+              </p>
+
+              <p>
+                Order ID:
+                <strong>
+                  ${order.orderId}
+                </strong>
+              </p>
+            </div>
+          `,
+        });
       }
     }
 
-    // ======================
-    // STATUS DELIVERED
-    // ======================
+    // =========================
+    // STATUS: SHIPPED
+    // =========================
 
-    if (status === "delivered") {
-      if (orderData.phone) {
+    if (status === "shipped") {
+      // WHATSAPP
+      if (order.phone) {
         await sendWhatsApp(
-          orderData.phone,
-          `Pesanan selesai ✅
+          order.phone,
+          `Pesanan kamu sudah dikirim 🚚
 
 Order:
-${orderData.orderId}
+${order.orderId}
 
-Terima kasih sudah berbelanja ❤️`
+Resi:
+${trackingNumber || "-"}
+
+Tracking:
+${trackingUrl}`
         );
+      }
+
+      // EMAIL
+      if (order.email) {
+        await resend.emails.send({
+          from:
+            "Khaira Shop <noreply@ks25.my.id>",
+
+          to: order.email,
+
+          subject:
+            "Pesanan Sudah Dikirim",
+
+          html: `
+            <div style="font-family:sans-serif">
+              <h2>
+                Pesanan Dikirim 🚚
+              </h2>
+
+              <p>
+                Halo ${order.customerName},
+              </p>
+
+              <p>
+                Pesanan kamu sudah dikirim.
+              </p>
+
+              <p>
+                <strong>
+                  Resi:
+                </strong>
+                ${trackingNumber || "-"}
+              </p>
+
+              <a
+                href="${trackingUrl}"
+                style="
+                  display:inline-block;
+                  margin-top:20px;
+                  background:black;
+                  color:white;
+                  padding:12px 20px;
+                  border-radius:10px;
+                  text-decoration:none;
+                "
+              >
+                Tracking Pesanan
+              </a>
+            </div>
+          `,
+        });
+      }
+    }
+
+    // =========================
+    // STATUS: DELIVERED
+    // =========================
+
+    if (status === "delivered") {
+      // WHATSAPP
+      if (order.phone) {
+        await sendWhatsApp(
+          order.phone,
+          `Pesanan sudah diterima 🎉
+
+Order:
+${order.orderId}
+
+Terima kasih sudah belanja di Khaira Shop ❤️`
+        );
+      }
+
+      // EMAIL
+      if (order.email) {
+        await resend.emails.send({
+          from:
+            "Khaira Shop <noreply@ks25.my.id>",
+
+          to: order.email,
+
+          subject:
+            "Pesanan Sudah Diterima",
+
+          html: `
+            <div style="font-family:sans-serif">
+              <h2>
+                Pesanan Diterima 🎉
+              </h2>
+
+              <p>
+                Halo ${order.customerName},
+              </p>
+
+              <p>
+                Pesanan kamu sudah diterima.
+              </p>
+
+              <p>
+                Terima kasih sudah berbelanja ❤️
+              </p>
+            </div>
+          `,
+        });
       }
     }
 
@@ -177,12 +262,15 @@ Terima kasih sudah berbelanja ❤️`
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.log(
+      "UPDATE STATUS ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         error:
-          "Update status gagal",
+          "Update status error",
       },
       {
         status: 500,
