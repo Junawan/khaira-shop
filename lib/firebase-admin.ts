@@ -1,12 +1,4 @@
-import {
-  cert,
-  getApps,
-  initializeApp,
-} from "firebase-admin/app";
-
-import {
-  getFirestore,
-} from "firebase-admin/firestore";
+import * as admin from "firebase-admin";
 
 const serviceAccount = {
   projectId:
@@ -25,16 +17,16 @@ const serviceAccount = {
       ),
 };
 
-const app =
-  getApps().length === 0
-    ? initializeApp({
-        credential: cert(
-          serviceAccount
-        ),
-      })
-    : getApps()[0];
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential:
+      admin.credential.cert(
+        serviceAccount
+      ),
+  });
+}
 
 const adminDb =
-  getFirestore(app);
+  admin.firestore();
 
 export default adminDb;

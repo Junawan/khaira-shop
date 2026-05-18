@@ -147,17 +147,17 @@ email:
       token:
         transaction.token,
     });
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
+  console.log("MIDTRANS ERROR:", error);
 
-    return NextResponse.json(
-      {
-        error:
-          "Midtrans Error",
-      },
-      {
-        status: 500,
-      }
-    );
-  }
+  return NextResponse.json(
+    {
+      error: error.message || "Midtrans Error",
+      detail: error,
+    },
+    {
+      status: 500,
+    }
+  );
+}
 }
