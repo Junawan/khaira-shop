@@ -23,13 +23,17 @@ export async function POST(req: Request) {
     const transactionStatus =
       body.transaction_status;
 
-    const fraudStatus =
-      body.fraud_status;
+    console.log(
+      "ORDER ID:",
+      orderId
+    );
 
-    // =========================
-    // CARI ORDER
-    // =========================
+    console.log(
+      "TRANSACTION STATUS:",
+      transactionStatus
+    );
 
+    // cari order
     const snapshot =
       await adminDb
         .collection("orders")
@@ -41,6 +45,10 @@ export async function POST(req: Request) {
         .get();
 
     if (snapshot.empty) {
+      console.log(
+        "ORDER NOT FOUND"
+      );
+
       return NextResponse.json(
         {
           error:
@@ -55,58 +63,28 @@ export async function POST(req: Request) {
     const orderDoc =
       snapshot.docs[0];
 
-    const orderRef =
-      orderDoc.ref;
-
     const orderData =
       orderDoc.data();
 
-    // =========================
-    // PAYMENT SUCCESS
-    // =========================
+    console.log(
+      "ORDER FOUND:",
+      orderData
+    );
 
-    const isPaid =
+    // hanya saat payment sukses
+    if (
       transactionStatus ===
-        "capture" ||
+        "settlement" ||
       transactionStatus ===
-        "settlement";
-
-    if (isPaid) {
-      // FRAUD CHECK
-      if (
-        transactionStatus ===
-          "capture" &&
-        fraudStatus !==
-          "accept"
-      ) {
-        return NextResponse.json({
-          message:
-            "Fraud detected",
-        });
-      }
-
-      // CEGAH DUPLIKAT
-      if (
-        orderData.paymentStatus ===
-        "paid"
-      ) {
-        return NextResponse.json({
-          success: true,
-          message:
-            "Already paid",
-        });
-      }
-
-      // =========================
-      // UPDATE FIRESTORE
-      // =========================
-
-      await orderRef.update({
+        "capture"
+    ) {
+      // update firestore
+      await orderDoc.ref.update({
         paymentStatus:
           "paid",
 
         orderStatus:
-          "processing",
+          "paid",
 
         paidAt: new Date(),
       });
@@ -115,11 +93,9 @@ export async function POST(req: Request) {
         "ORDER UPDATED"
       );
 
-      const trackingUrl = `https://khairashop25.vercel.app/tracking/${orderData.orderId}`;
-
-      // =========================
-      // SEND EMAIL
-      // =========================
+      // =====================
+      // EMAIL
+      // =====================
 
       if (orderData.email) {
         try {
@@ -127,7 +103,7 @@ export async function POST(req: Request) {
             await resend.emails.send(
               {
                 from:
-                  "Khaira Shop <noreply@send.ks25.my.id>",
+                  "Khaira Shop <noreply@ks25.my.id>",
 
                 to: orderData.email,
 
@@ -135,72 +111,36 @@ export async function POST(req: Request) {
                   "Pembayaran Berhasil",
 
                 html: `
-                <div style="font-family:sans-serif">
+                <h2>Pembayaran Berhasil ✅</h2>
 
-                  <h2>
-                    Pembayaran Berhasil ✅
-                  </h2>
+                <p>Halo ${orderData.customerName}</p>
 
-                  <p>
-                    Halo ${
-                      orderData.customerName
-                    },
-                  </p>
+                <p>Pesanan kamu berhasil dibayar.</p>
 
-                  <p>
-                    Pesanan kamu berhasil dibayar.
-                  </p>
+                <p><strong>Order ID:</strong> ${orderData.orderId}</p>
 
-                  <p>
-                    <strong>Order ID:</strong>
-                    ${
-                      orderData.orderId
-                    }
-                  </p>
-
-                  <p>
-                    <strong>Total:</strong>
-                    Rp${(
-                      orderData.total ||
-                      0
-                    ).toLocaleString()}
-                  </p>
-
-                  <a
-                    href="${trackingUrl}"
-                    style="
-                      display:inline-block;
-                      margin-top:20px;
-                      background:black;
-                      color:white;
-                      padding:12px 20px;
-                      border-radius:10px;
-                      text-decoration:none;
-                    "
-                  >
-                    Tracking Pesanan
-                  </a>
-
-                </div>
-                `,
+                <p><strong>Total:</strong> Rp${(
+                  orderData.total || 0
+                ).toLocaleString()}</p>
+              `,
               }
             );
 
           console.log(
-            "EMAIL SENT:",
+            "EMAIL RESULT:",
             emailResult
           );
-        } catch (emailError) {
+        } catch (err) {
           console.log(
             "EMAIL ERROR:",
-            emailError
+            err
           );
         }
       }
 
-      // =========================
-      // SEND WHATSAPP
-      // =========================
+      // =====================
+      // WHATSAPP
+      // =====================
 
       if (orderData.phone) {
         try {
@@ -214,22 +154,18 @@ ${orderData.orderId}
 
 Total:
 Rp${(
-                orderData.total ||
-                0
-              ).toLocaleString()}
-
-Tracking:
-${trackingUrl}`
+                orderData.total || 0
+              ).toLocaleString()}`
             );
 
           console.log(
-            "WA SENT:",
+            "WA RESULT:",
             waResult
           );
-        } catch (waError) {
+        } catch (err) {
           console.log(
             "WA ERROR:",
-            waError
+            err
           );
         }
       }
@@ -259,7 +195,6 @@ ${trackingUrl}`
 export async function GET() {
   return NextResponse.json({
     success: true,
-    message:
-      "Webhook active",
+    message: "Webhook active",
   });
 }
