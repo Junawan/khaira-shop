@@ -645,6 +645,35 @@ export default function AdminOrdersPage() {
                           </button>
                         </Link>
 
+                        <button
+  onClick={async () => {
+    try {
+      const response =
+        await fetch(
+          "/api/biteship/track"
+        );
+
+      const data =
+        await response.json();
+
+      console.log(data);
+
+      alert(
+        "Tracking berhasil disync"
+      );
+    } catch (error) {
+      console.log(error);
+
+      alert(
+        "Gagal sync tracking"
+      );
+    }
+  }}
+  className="bg-purple-600 text-white px-5 py-3 rounded-2xl hover:opacity-90 transition"
+>
+  Sync Tracking
+</button>
+
                       </div>
 
                     </div>
