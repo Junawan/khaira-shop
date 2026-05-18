@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+
 import adminDb from "@/lib/firebase-admin";
 
 import { resend } from "@/lib/resend";
@@ -388,4 +390,12 @@ Terima kasih sudah berbelanja di Khaira Shop ❤️`;
       }
     );
   }
+  
+}
+
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: "Midtrans webhook active",
+  });
 }
