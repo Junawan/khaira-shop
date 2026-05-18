@@ -7,34 +7,32 @@ export async function sendWhatsApp(
       "https://api.fonnte.com/send",
       {
         method: "POST",
-
         headers: {
           Authorization:
-            process.env
-              .FONNTE_TOKEN || "",
-
+            process.env.FONNTE_TOKEN!,
           "Content-Type":
             "application/json",
         },
-
         body: JSON.stringify({
           target,
           message,
-          countryCode: "62",
         }),
       }
     );
 
-    const data =
+    const result =
       await response.json();
 
     console.log(
-      "FONNTE:",
-      data
+      "FONNTE RESULT:",
+      result
     );
 
-    return data;
+    return result;
   } catch (error) {
-    console.log(error);
+    console.log(
+      "FONNTE ERROR:",
+      error
+    );
   }
 }

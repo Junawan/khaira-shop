@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
     console.log(
       "MIDTRANS WEBHOOK:",
-      body
+      JSON.stringify(body, null, 2)
     );
 
     const orderId =
@@ -24,6 +24,22 @@ export async function POST(req: Request) {
     const fraudStatus =
       body.fraud_status;
 
+    const paymentType =
+      body.payment_type;
+
+    // VALIDASI ORDER ID
+    if (!orderId) {
+      return NextResponse.json(
+        {
+          error:
+            "Order ID kosong",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     // CARI ORDER
     const snapshot =
       await adminDb
@@ -33,10 +49,16 @@ export async function POST(req: Request) {
           "==",
           orderId
         )
+        .limit(1)
         .get();
 
     // ORDER TIDAK DITEMUKAN
     if (snapshot.empty) {
+      console.log(
+        "ORDER TIDAK DITEMUKAN:",
+        orderId
+      );
+
       return NextResponse.json(
         {
           error:
@@ -57,22 +79,53 @@ export async function POST(req: Request) {
     const orderData =
       orderDoc.data();
 
-    // PAYMENT SUCCESS
+    console.log(
+      "ORDER DITEMUKAN:",
+      orderData.orderId
+    );
+
+    // =========================
+    // STATUS PEMBAYARAN
+    // =========================
+
     const isPaid =
       transactionStatus ===
-        "capture" ||
+        "settlement" ||
       transactionStatus ===
-        "settlement";
+        "capture";
+
+    const isPending =
+      transactionStatus ===
+      "pending";
+
+    const isFailed =
+      transactionStatus ===
+        "deny" ||
+      transactionStatus ===
+        "cancel" ||
+      transactionStatus ===
+        "expire";
+
+    // =========================
+    // PAYMENT SUCCESS
+    // =========================
 
     if (isPaid) {
       // FRAUD CHECK
       if (
         transactionStatus ===
           "capture" &&
+        fraudStatus &&
         fraudStatus !==
           "accept"
       ) {
+        console.log(
+          "FRAUD DETECTED"
+        );
+
         return NextResponse.json({
+          success: false,
+
           message:
             "Fraud detected",
         });
@@ -83,6 +136,10 @@ export async function POST(req: Request) {
         orderData.paymentStatus ===
         "paid"
       ) {
+        console.log(
+          "ORDER SUDAH PAID"
+        );
+
         return NextResponse.json({
           success: true,
 
@@ -99,15 +156,24 @@ export async function POST(req: Request) {
         orderStatus:
           "paid",
 
-        paidAt: new Date(),
+        paymentMethod:
+          paymentType || "",
+
+        transactionStatus,
+
+        paidAt:
+          new Date(),
+
+        updatedAt:
+          new Date(),
       });
 
       console.log(
         "ORDER UPDATED TO PAID"
       );
 
-      // LINK TRACKING
-      const trackingUrl = `http://localhost:3000/tracking/${orderData.orderId}`;
+      // GANTI DENGAN DOMAIN VERCEL
+      const trackingUrl = `https://khairashop25.vercel.app/tracking/${orderData.orderId}`;
 
       // =========================
       // SEND EMAIL
@@ -121,13 +187,14 @@ export async function POST(req: Request) {
                 from:
                   "Khaira Shop <onboarding@resend.dev>",
 
-                to: orderData.email,
+                to:
+                  orderData.email,
 
                 subject:
-                  "Pembayaran Berhasil",
+                  "Pembayaran Berhasil ✅",
 
                 html: `
-                <div style="font-family:sans-serif">
+                <div style="font-family:sans-serif;max-width:600px;margin:auto">
 
                   <h2>
                     Pembayaran Berhasil ✅
@@ -135,40 +202,52 @@ export async function POST(req: Request) {
 
                   <p>
                     Halo ${
-                      orderData.customerName
+                      orderData.customerName ||
+                      "Customer"
                     },
                   </p>
 
                   <p>
-                    Pesanan kamu berhasil dibayar.
+                    Pesanan kamu berhasil dibayar dan sedang diproses.
                   </p>
 
-                  <p>
-                    <strong>
-                      Order ID:
-                    </strong>
-                    ${
-                      orderData.orderId
-                    }
-                  </p>
+                  <div style="background:#f5f5f5;padding:16px;border-radius:12px;margin-top:20px">
 
-                  <p>
-                    <strong>
-                      Total:
-                    </strong>
-                    Rp${(
-                      orderData.total || 0
-                    ).toLocaleString()}
-                  </p>
+                    <p>
+                      <strong>Order ID:</strong>
+                      ${
+                        orderData.orderId
+                      }
+                    </p>
+
+                    <p>
+                      <strong>Total:</strong>
+                      Rp${(
+                        orderData.total ||
+                        0
+                      ).toLocaleString(
+                        "id-ID"
+                      )}
+                    </p>
+
+                    <p>
+                      <strong>Pembayaran:</strong>
+                      ${
+                        paymentType ||
+                        "-"
+                      }
+                    </p>
+
+                  </div>
 
                   <a
                     href="${trackingUrl}"
                     style="
                       display:inline-block;
-                      margin-top:20px;
+                      margin-top:24px;
                       background:black;
                       color:white;
-                      padding:12px 20px;
+                      padding:14px 24px;
                       text-decoration:none;
                       border-radius:10px;
                     "
@@ -176,8 +255,12 @@ export async function POST(req: Request) {
                     Tracking Pesanan
                   </a>
 
+                  <p style="margin-top:30px;font-size:14px;color:#666">
+                    Terima kasih sudah berbelanja di Khaira Shop ❤️
+                  </p>
+
                 </div>
-              `,
+                `,
               }
             );
 
@@ -203,21 +286,30 @@ export async function POST(req: Request) {
 
       if (orderData.phone) {
         try {
-          const waResult =
-            await sendWhatsApp(
-              orderData.phone,
-              `Pembayaran berhasil ✅
+          const message = `Pembayaran berhasil ✅
 
-Order:
+Order ID:
 ${orderData.orderId}
 
 Total:
 Rp${(
-                orderData.total || 0
-              ).toLocaleString()}
+            orderData.total || 0
+          ).toLocaleString(
+            "id-ID"
+          )}
+
+Pembayaran:
+${paymentType || "-"}
 
 Tracking:
-${trackingUrl}`
+${trackingUrl}
+
+Terima kasih sudah berbelanja di Khaira Shop ❤️`;
+
+          const waResult =
+            await sendWhatsApp(
+              orderData.phone,
+              message
             );
 
           console.log(
@@ -235,6 +327,46 @@ ${trackingUrl}`
           "PHONE CUSTOMER KOSONG"
         );
       }
+    }
+
+    // =========================
+    // PAYMENT PENDING
+    // =========================
+
+    if (isPending) {
+      await orderRef.update({
+        paymentStatus:
+          "pending",
+
+        transactionStatus,
+
+        updatedAt:
+          new Date(),
+      });
+
+      console.log(
+        "ORDER PENDING"
+      );
+    }
+
+    // =========================
+    // PAYMENT FAILED
+    // =========================
+
+    if (isFailed) {
+      await orderRef.update({
+        paymentStatus:
+          "failed",
+
+        transactionStatus,
+
+        updatedAt:
+          new Date(),
+      });
+
+      console.log(
+        "ORDER FAILED"
+      );
     }
 
     return NextResponse.json({
