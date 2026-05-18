@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/biteship/track",
-      "schedule": "*/30 * * * *"
-    }
-  ]
-}
