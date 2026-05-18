@@ -1,10 +1,17 @@
 "use client";
 
+import {
+  Suspense,
+  useEffect,
+} from "react";
+
+import {
+  useSearchParams,
+} from "next/navigation";
+
 import Link from "next/link";
 
-import { useSearchParams } from "next/navigation";
-
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams =
     useSearchParams();
 
@@ -13,12 +20,18 @@ export default function PaymentSuccessPage() {
       "order_id"
     );
 
+  useEffect(() => {
+    console.log(
+      "ORDER:",
+      orderId
+    );
+  }, [orderId]);
+
   return (
-    <main className="min-h-screen bg-[#faf7f2] flex items-center justify-center p-6">
+    <main className="min-h-screen flex items-center justify-center bg-[#faf7f2] p-6">
+      <div className="bg-white p-10 rounded-3xl shadow-sm max-w-lg w-full text-center">
 
-      <div className="bg-white rounded-3xl shadow-sm max-w-lg w-full p-10 text-center">
-
-        <div className="text-6xl mb-6">
+        <div className="text-6xl mb-4">
           ✅
         </div>
 
@@ -26,48 +39,60 @@ export default function PaymentSuccessPage() {
           Pembayaran Berhasil
         </h1>
 
-        <p className="text-gray-600 mb-8">
-          Terima kasih sudah
-          berbelanja di
-          Khaira Shop.
+        <p className="text-gray-600 mb-6">
+          Pesanan kamu berhasil
+          diproses.
         </p>
 
         {orderId && (
-          <div className="bg-gray-100 rounded-2xl p-4 mb-8">
+          <div className="bg-gray-100 rounded-xl p-4 mb-6">
 
             <p className="text-sm text-gray-500">
               Order ID
             </p>
 
-            <p className="font-bold text-lg break-all">
+            <p className="font-bold">
               {orderId}
             </p>
 
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3">
+
+          <Link
+            href="/"
+            className="bg-black text-white py-3 rounded-xl"
+          >
+            Kembali ke Home
+          </Link>
 
           {orderId && (
             <Link
               href={`/tracking/${orderId}`}
-              className="block w-full bg-black text-white py-4 rounded-2xl font-semibold"
+              className="border border-black py-3 rounded-xl"
             >
               Tracking Pesanan
             </Link>
           )}
 
-          <Link
-            href="/"
-            className="block w-full border border-gray-300 py-4 rounded-2xl font-semibold"
-          >
-            Kembali Belanja
-          </Link>
-
         </div>
 
       </div>
-
     </main>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
