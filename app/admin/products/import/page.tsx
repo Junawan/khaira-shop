@@ -248,32 +248,6 @@ image4:
 
 const downloadVariantTemplate = () => {
   const data = [
-    {
-      name: "Hijab Paris",
-      type: "variant",
-      category: "Hijab",
-      description:
-        "Hijab premium adem",
-      image1:
-  "https://yourdomain.com/hijab1.jpg",
-
-image2:
-  "https://yourdomain.com/hijab2.jpg",
-
-image3:
-  "https://yourdomain.com/hijab3.jpg",
-
-image4:
-  "https://yourdomain.com/hijab4.jpg",
-      variantName: "Warna",
-      variantValue: "Hitam",
-      price: 75000,
-      stock: 5,
-      weight: 300,
-      packageLength: 15,
-      packageWidth: 15,
-      packageHeight: 3,
-    },
 
     {
       Name: "Hijab Paris",
