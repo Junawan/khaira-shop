@@ -82,43 +82,47 @@ export async function POST(req: Request) {
 
       // HANDLE VARIANT
       if (item.type === "variant") {
-        const existingVariant =
-          groupedProducts[
-            key
-          ].variants.find(
-            (v: any) =>
-              v.name ===
-              item.variantName
-          );
 
-        const valueData = {
-          value:
-            item.variantValue || "",
+  const variantName =
+    item.variantName || "Varian";
 
-          price:
-            Number(item.price) || 0,
+  const existingVariant =
+    groupedProducts[
+      key
+    ].variants.find(
+      (v: any) =>
+        v.name === variantName
+    );
 
-          stock:
-            Number(item.stock) || 0,
-        };
+  const valueData = {
+    value:
+      item.variantValue || "",
 
-        // JIKA VARIANT SUDAH ADA
-        if (existingVariant) {
-          existingVariant.values.push(
-            valueData
-          );
-        } else {
-          // BUAT VARIANT BARU
-          groupedProducts[
-            key
-          ].variants.push({
-            name:
-              item.variantName || "",
+    price:
+      Number(item.price) || 0,
 
-            values: [valueData],
-          });
-        }
-      }
+    stock:
+      Number(item.stock) || 0,
+  };
+
+  if (existingVariant) {
+
+    existingVariant.values.push(
+      valueData
+    );
+
+  } else {
+
+    groupedProducts[
+      key
+    ].variants.push({
+      name: variantName,
+
+      values: [valueData],
+    });
+
+  }
+}
     }
 
     const finalProducts =

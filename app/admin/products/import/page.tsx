@@ -62,12 +62,93 @@ export default function ImportProductsPage() {
         workbook.SheetNames[0]
       ];
 
-    const json =
-      XLSX.utils.sheet_to_json(
-        sheet
-      ) as ProductRow[];
+    const raw =
+  XLSX.utils.sheet_to_json(sheet);
 
-    setRows(json);
+const formatted: ProductRow[] =
+  raw.map((item: any) => ({
+    name:
+      item.name ||
+      item.Nama ||
+      "",
+
+    type:
+      item.type ||
+      item.Type ||
+      "single",
+
+    category:
+      item.category ||
+      item.Category ||
+      "",
+
+    description:
+      item.description ||
+      item.Description ||
+      "",
+
+    image1:
+      item.image1 ||
+      item.Image1 ||
+      "",
+
+    image2:
+      item.image2 ||
+      item.Image2 ||
+      "",
+
+    image3:
+      item.image3 ||
+      item.Image3 ||
+      "",
+
+    image4:
+      item.image4 ||
+      item.Image4 ||
+      "",
+
+    price: Number(
+      item.price ||
+      item.Harga ||
+      0
+    ),
+
+    stock: Number(
+      item.stock ||
+      item.Stock ||
+      0
+    ),
+
+    weight: Number(
+      item.weight || 0
+    ),
+
+    packageLength: Number(
+      item.packageLength || 0
+    ),
+
+    packageWidth: Number(
+      item.packageWidth || 0
+    ),
+
+    packageHeight: Number(
+      item.packageHeight || 0
+    ),
+
+    variantName:
+      item.variantName ||
+      item.VariantName ||
+      "",
+
+    variantValue:
+      item.variantValue ||
+      item.VariantValue ||
+      "",
+  }));
+
+setRows(formatted);
+
+console.log(formatted);
   };
 
   const handleImport =
@@ -195,30 +276,30 @@ image4:
     },
 
     {
-      name: "Hijab Paris",
-      type: "variant",
-      category: "Hijab",
-      description:
+      Name: "Hijab Paris",
+      Type: "variant",
+      Category: "Hijab",
+      Description:
         "Hijab premium adem",
-      image1:
+      Image1:
   "https://yourdomain.com/hijab1.jpg",
 
-image2:
+Image2:
   "https://yourdomain.com/hijab2.jpg",
 
-image3:
+Image3:
   "https://yourdomain.com/hijab3.jpg",
 
-image4:
+Image4:
   "https://yourdomain.com/hijab4.jpg",
-      variantName: "Warna",
-      variantValue: "Cream",
-      price: 75000,
-      stock: 8,
-      weight: 300,
-      packageLength: 15,
-      packageWidth: 15,
-      packageHeight: 3,
+      VariantName: "Warna",
+      VariantValue: "Cream",
+      Price: 75000,
+      Stock: 8,
+      Weight: 300,
+      PackageLength: 15,
+      PackageWidth: 15,
+      PackageHeight: 3,
     },
   ];
 
