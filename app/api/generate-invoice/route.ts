@@ -142,33 +142,63 @@ export async function GET(
     y -= 30;
 
     order?.items?.forEach(
-      (item: any) => {
-        page.drawText(
-          `${item.name} x${item.quantity}`,
-          {
-            x: 50,
-            y,
-            size: 12,
-            font,
-          }
-        );
+  (item: any) => {
+    const productText =
+      `${item.name} x${item.quantity}`;
 
-        page.drawText(
-          `Rp ${(
-            item.price *
-            item.quantity
-          ).toLocaleString()}`,
-          {
-            x: 400,
-            y,
-            size: 12,
-            font,
-          }
-        );
+    // potong teks panjang
+    const maxLength = 55;
 
-        y -= 20;
+    const lines: string[] = [];
+
+    for (
+      let i = 0;
+      i < productText.length;
+      i += maxLength
+    ) {
+      lines.push(
+        productText.substring(
+          i,
+          i + maxLength
+        )
+      );
+    }
+
+    lines.forEach(
+      (
+        line,
+        index
+      ) => {
+        page.drawText(line, {
+          x: 50,
+          y:
+            y -
+            index * 15,
+          size: 12,
+          font,
+        });
       }
     );
+
+    // harga di kanan
+    page.drawText(
+      `Rp ${(
+        item.price *
+        item.quantity
+      ).toLocaleString()}`,
+      {
+        x: 470,
+        y,
+        size: 12,
+        font,
+      }
+    );
+
+    y -=
+      lines.length * 15 +
+      15;
+  }
+);
 
     y -= 30;
 
@@ -189,7 +219,56 @@ export async function GET(
       }
     );
 
-    y -= 80;
+    y -= 50;
+
+// info pengirim
+page.drawText(
+  "Pengirim:",
+  {
+    x: 50,
+    y,
+    size: 14,
+    font,
+  }
+);
+
+y -= 20;
+
+page.drawText(
+  "KhairaShop25",
+  {
+    x: 50,
+    y,
+    size: 12,
+    font,
+  }
+);
+
+y -= 18;
+
+page.drawText(
+  "Citeureup, Bogor",
+  {
+    x: 50,
+    y,
+    size: 12,
+    font,
+  }
+);
+
+y -= 18;
+
+page.drawText(
+  "WA: 08xxxxxxxxxx",
+  {
+    x: 50,
+    y,
+    size: 12,
+    font,
+  }
+);
+
+y -= 60;
 
     const barcodeBuffer =
       await bwipjs.toBuffer({
@@ -209,7 +288,7 @@ export async function GET(
     page.drawImage(
       barcodeImage,
       {
-        x: 150,
+        x: 140,
         y,
         width: 300,
         height: 80,
@@ -222,7 +301,7 @@ export async function GET(
       order?.trackingNumber ||
         order?.orderId,
       {
-        x: 220,
+        x: 210,
         y,
         size: 12,
         font,
