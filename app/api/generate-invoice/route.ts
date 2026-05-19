@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { adminDb } from "@/lib/firebase-admin";
 
+const fontkit = require("fontkit");
+
 const PDFDocument = require("pdfkit");
 
 const bwipjs = require("bwip-js");
@@ -41,6 +43,14 @@ export async function GET(
     const pdf = new PDFDocument({
   margin: 40,
 });
+
+pdf.registerFont(
+  "Arial",
+  process.cwd() +
+    "/public/fonts/arial.ttf"
+);
+
+pdf.font("Arial");
 
     const chunks: Uint8Array[] =
       [];
