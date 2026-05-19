@@ -108,10 +108,12 @@ const formatted: ProductRow[] =
       "",
 
     price: Number(
-      item.price ||
-      item.Harga ||
-      0
-    ),
+  item.price ||
+  item.Price ||
+  item.Harga ||
+  item.harga ||
+  0
+),
 
     stock: Number(
       item.stock ||
