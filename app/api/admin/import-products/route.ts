@@ -11,86 +11,113 @@ function slugify(text: string) {
 
 export async function POST(req: Request) {
   try {
-    const body =
-      await req.json();
+    const body = await req.json();
 
     const products =
       body.products || [];
 
-    const groupedProducts:
-      Record<string, any> = {};
+    const groupedProducts: Record<
+      string,
+      any
+    > = {};
 
     for (const item of products) {
       const key = item.name;
 
-      if (
-        !groupedProducts[key]
-      ) {
+      // BUAT PRODUCT PERTAMA
+      if (!groupedProducts[key]) {
         groupedProducts[key] = {
-          name: item.name,
+          name: item.name || "",
 
           slug: slugify(
-            item.name
+            item.name || ""
           ),
 
           type:
-            item.type ||
-            "single",
+            item.type || "single",
 
           category:
             item.category || "",
 
           description:
-            item.description ||
-            "",
+            item.description || "",
 
           image:
-  item.image1 || "",
+            item.image1 || "",
 
-images: [
-  item.image1,
-  item.image2,
-  item.image3,
-  item.image4,
-].filter(Boolean),
+          images: [
+            item.image1,
+            item.image2,
+            item.image3,
+            item.image4,
+          ].filter(Boolean),
 
           price:
-            Number(
-              item.price
-            ) || 0,
+            Number(item.price) || 0,
 
           stock:
+            Number(item.stock) || 0,
+
+          weight:
+            Number(item.weight) || 0,
+
+          length:
             Number(
-              item.stock
+              item.packageLength
+            ) || 0,
+
+          width:
+            Number(
+              item.packageWidth
+            ) || 0,
+
+          height:
+            Number(
+              item.packageHeight
             ) || 0,
 
           variants: [],
         };
       }
 
-      if (
-        item.type ===
-        "variant"
-      ) {
-        groupedProducts[
-          key
-        ].variants.push({
-          name:
-            item.variantName,
+      // HANDLE VARIANT
+      if (item.type === "variant") {
+        const existingVariant =
+          groupedProducts[
+            key
+          ].variants.find(
+            (v: any) =>
+              v.name ===
+              item.variantName
+          );
 
+        const valueData = {
           value:
-            item.variantValue,
+            item.variantValue || "",
 
           price:
-            Number(
-              item.price
-            ) || 0,
+            Number(item.price) || 0,
 
           stock:
-            Number(
-              item.stock
-            ) || 0,
-        });
+            Number(item.stock) || 0,
+        };
+
+        // JIKA VARIANT SUDAH ADA
+        if (existingVariant) {
+          existingVariant.values.push(
+            valueData
+          );
+        } else {
+          // BUAT VARIANT BARU
+          groupedProducts[
+            key
+          ].variants.push({
+            name:
+              item.variantName || "",
+
+            values: [valueData],
+          });
+        }
       }
     }
 
@@ -99,6 +126,7 @@ images: [
         groupedProducts
       );
 
+    // SIMPAN KE FIRESTORE
     for (const product of finalProducts) {
       await adminDb
         .collection("products")
