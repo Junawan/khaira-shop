@@ -39,6 +39,8 @@ type Product = {
 
   price: number;
 
+  images?: string[];
+
   variants?: Variant[];
 
   weight?: number;
@@ -74,6 +76,11 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] =
     useState(1);
 
+    const [
+  selectedImage,
+  setSelectedImage,
+] = useState("");
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -100,6 +107,8 @@ export default function ProductDetailPage() {
 
             image: data.image || "",
 
+images: data.images || [],
+
             price: data.price || 0,
 
             variants:
@@ -119,6 +128,19 @@ export default function ProductDetailPage() {
           };
 
           setProduct(productData);
+
+          if (
+  productData.images &&
+  productData.images.length > 0
+) {
+  setSelectedImage(
+    productData.images[0]
+  );
+} else {
+  setSelectedImage(
+    productData.image || ""
+  );
+}
 
           if (
             productData.variants &&
@@ -214,23 +236,70 @@ export default function ProductDetailPage() {
 
           <div className="relative w-full aspect-square overflow-hidden rounded-2xl">
 
-            {product.image ? (
-              <Image
-  src={product.image}
-  alt={product.name}
-  fill
-  sizes="(max-width: 768px) 100vw, 50vw"
-  className="object-cover"
-/>
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                No Image
-              </div>
-            )}
+            {selectedImage ? (
+  <Image
+    src={selectedImage}
+    alt={product.name}
+    fill
+    sizes="(max-width: 768px) 100vw, 50vw"
+    className="object-cover"
+  />
+) : (
+  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+    No Image
+  </div>
+)}
 
           </div>
 
-        </div>
+{/* THUMBNAILS */}
+
+{product.images &&
+  product.images.length > 0 && (
+
+    <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
+
+      {product.images.map(
+        (img, index) => (
+
+          <button
+            key={index}
+            onClick={() =>
+              setSelectedImage(img)
+            }
+            className={`
+              relative
+              w-20
+              h-20
+              rounded-xl
+              overflow-hidden
+              border-2
+              flex-shrink-0
+              ${
+                selectedImage === img
+                  ? "border-black"
+                  : "border-gray-200"
+              }
+            `}
+          >
+
+            <Image
+              src={img}
+              alt={`thumb-${index}`}
+              fill
+              className="object-cover"
+            />
+
+          </button>
+        )
+      )}
+
+    </div>
+)}
+
+</div>
+
+        
 
         {/* INFO */}
 
