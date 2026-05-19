@@ -6,7 +6,10 @@ type ProductCardProps = {
   id: string;
   name: string;
   price: number;
+
   images?: string[];
+
+  image?: string;
 };
 
 export default function ProductCard({
@@ -14,6 +17,7 @@ export default function ProductCard({
   name,
   price,
   images,
+  image,
 }: ProductCardProps) {
   const addToCart = useCartStore(
     (state) => state.addToCart
@@ -22,7 +26,7 @@ export default function ProductCard({
   const mainImage =
   images && images.length > 0
     ? images[0]
-    : "";
+    : image || "";
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition">

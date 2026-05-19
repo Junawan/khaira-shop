@@ -22,6 +22,8 @@ type Product = {
 
   price: number;
 
+  image?: string;
+
   images?: string[];
 
   description?: string;
@@ -260,6 +262,7 @@ export default function Home() {
   name={product.name}
   price={finalPrice}
   images={product.images}
+  image={product.image}
 />
 
                     </div>
