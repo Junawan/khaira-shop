@@ -268,7 +268,7 @@ page.drawText(
   }
 );
 
-y -= 60;
+y -= 100;
 
     const barcodeBuffer =
       await bwipjs.toBuffer({
@@ -277,7 +277,7 @@ y -= 60;
           order?.trackingNumber ||
           order?.orderId,
         scale: 3,
-        height: 10,
+        height: 8,
       });
 
     const barcodeImage =
