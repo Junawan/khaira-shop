@@ -2,17 +2,18 @@ import { NextResponse } from "next/server";
 
 import { adminDb } from "@/lib/firebase-admin";
 
-const fontkit = require("fontkit");
+import {
+  PDFDocument,
+  rgb,
+  StandardFonts,
+} from "pdf-lib";
 
-import PDFDocument from "pdfkit";
-
-const bwipjs = require("bwip-js");
+import bwipjs from "bwip-js";
 
 export async function GET(
   req: Request
 ) {
   try {
-
     const { searchParams } =
       new URL(req.url);
 
@@ -37,206 +38,209 @@ export async function GET(
         .doc(orderId)
         .get();
 
+    if (!docSnap.exists) {
+      return NextResponse.json(
+        {
+          error:
+            "Order tidak ditemukan",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
     const order =
       docSnap.data();
 
-    const pdf = new PDFDocument({
-  margin: 40,
-});
+    const pdfDoc =
+      await PDFDocument.create();
 
-pdf.registerFont(
-  "Arial",
-  process.cwd() +
-    "/public/fonts/arial.ttf"
-);
+    const page =
+      pdfDoc.addPage([
+        595,
+        842,
+      ]);
 
-pdf.font("Arial");
-
-pdf.registerFont(
-  "Arial",
-  process.cwd() +
-    "/public/fonts/arial.ttf"
-);
-
-pdf.font("Arial");
-
-    const chunks: Uint8Array[] =
-      [];
-
-    pdf.on(
-      "data",
-      (chunk: Buffer) =>
-  chunks.push(chunk)
-    );
-
-    const barcode =
-      await bwipjs.toBuffer({
-        bcid: "code128",
-
-        text:
-          order?.airwayBillId ||
-          order?.orderId,
-
-        scale: 3,
-
-        height: 10,
-      });
-
-    // HEADER
-
-    pdf
-      .fontSize(24)
-      .text(
-        "INVOICE",
-        {
-          align: "center",
-        }
+    const font =
+      await pdfDoc.embedFont(
+        StandardFonts.Helvetica
       );
 
-    pdf.moveDown();
+    let y = 800;
 
-    pdf
-  .fontSize(14)
-  .text(
-    `Order ID: ${order?.orderId}`
-  );
-
-pdf.moveDown(0.5);
-
-pdf
-  .fontSize(16)
-  .text("PENGIRIM", {
-    underline: true,
-  });
-
-pdf.text(
-  "Khaira Shop"
-);
-
-pdf.text(
-  "Bogor, Jawa Barat"
-);
-
-pdf.text(
-  "WA: 0857-1025-5464"
-);
-
-pdf.moveDown();
-
-pdf
-  .fontSize(16)
-  .text("PENERIMA", {
-    underline: true,
-  });
-
-pdf.text(
-  `Nama: ${order?.customerName}`
-);
-
-pdf.text(
-  `Phone: ${order?.phone}`
-);
-
-pdf.text(
-  `Alamat: ${order?.address}`
-);
-
-    pdf.moveDown();
-
-    // ITEMS
-
-    pdf
-      .fontSize(18)
-      .text("Produk");
-
-    pdf.moveDown(0.5);
-
-    order?.items?.forEach(
-      (item: any) => {
-        pdf
-          .fontSize(12)
-          .text(
-            `${item.name} x${item.quantity}`
-          );
-
-        pdf.text(
-          `Rp ${(
-            item.price *
-            item.quantity
-          ).toLocaleString()}`
-        );
-
-        pdf.moveDown(
-          0.5
-        );
+    page.drawText(
+      "INVOICE",
+      {
+        x: 230,
+        y,
+        size: 24,
+        font,
       }
     );
 
-    pdf.moveDown();
+    y -= 40;
 
-    pdf
-      .fontSize(16)
-      .text(
-        `Total: Rp ${(
-          order?.total || 0
-        ).toLocaleString()}`,
-        {
-          align: "right",
-        }
-      );
+    page.drawText(
+      `Order ID: ${order?.orderId}`,
+      {
+        x: 50,
+        y,
+        size: 12,
+        font,
+      }
+    );
 
-    pdf.moveDown(2);
+    y -= 20;
 
-    // BARCODE
+    page.drawText(
+      `Customer: ${order?.customerName}`,
+      {
+        x: 50,
+        y,
+        size: 12,
+        font,
+      }
+    );
 
-    pdf.image(barcode, {
-      fit: [250, 80],
+    y -= 20;
 
-      align: "center",
-    });
+    page.drawText(
+      `Phone: ${order?.phone}`,
+      {
+        x: 50,
+        y,
+        size: 12,
+        font,
+      }
+    );
 
-    pdf.moveDown();
+    y -= 20;
 
-    pdf
-      .fontSize(12)
-      .text(
-        order?.airwayBillId ||
+    page.drawText(
+      `Address: ${order?.address}`,
+      {
+        x: 50,
+        y,
+        size: 12,
+        font,
+      }
+    );
+
+    y -= 40;
+
+    page.drawText(
+      "Produk:",
+      {
+        x: 50,
+        y,
+        size: 16,
+        font,
+      }
+    );
+
+    y -= 30;
+
+    order?.items?.forEach(
+      (item: any) => {
+        page.drawText(
+          `${item.name} x${item.quantity}`,
+          {
+            x: 50,
+            y,
+            size: 12,
+            font,
+          }
+        );
+
+        page.drawText(
+          `Rp ${(
+            item.price *
+            item.quantity
+          ).toLocaleString()}`,
+          {
+            x: 400,
+            y,
+            size: 12,
+            font,
+          }
+        );
+
+        y -= 20;
+      }
+    );
+
+    y -= 30;
+
+    page.drawText(
+      `Total: Rp ${(
+        order?.total || 0
+      ).toLocaleString()}`,
+      {
+        x: 350,
+        y,
+        size: 16,
+        font,
+        color: rgb(
+          0,
+          0.5,
+          0
+        ),
+      }
+    );
+
+    y -= 80;
+
+    const barcodeBuffer =
+      await bwipjs.toBuffer({
+        bcid: "code128",
+        text:
+          order?.trackingNumber ||
           order?.orderId,
-        {
-          align: "center",
-        }
+        scale: 3,
+        height: 10,
+      });
+
+    const barcodeImage =
+      await pdfDoc.embedPng(
+        barcodeBuffer
       );
 
-    pdf.end();
+    page.drawImage(
+      barcodeImage,
+      {
+        x: 150,
+        y,
+        width: 300,
+        height: 80,
+      }
+    );
 
-    const pdfBuffer =
-      await new Promise<Buffer>(
-        (resolve) => {
-          pdf.on(
-            "end",
-            () => {
-              resolve(
-                Buffer.concat(
-                  chunks
-                )
-              );
-            }
-          );
-        }
-      );
+    y -= 30;
+
+    page.drawText(
+      order?.trackingNumber ||
+        order?.orderId,
+      {
+        x: 220,
+        y,
+        size: 12,
+        font,
+      }
+    );
+
+    const pdfBytes =
+      await pdfDoc.save();
 
     return new Response(
-  new Uint8Array(pdfBuffer),
-  {
-    headers: {
-  "Content-Type":
-    "application/pdf",
-
-  "Content-Disposition":
-    `inline; filename=invoice-${orderId}.pdf`,
-},
-  }
-);
+      pdfBytes,
+      {
+        headers: {
+          "Content-Type":
+            "application/pdf",
+        },
+      }
+    );
   } catch (error) {
     console.log(error);
 
