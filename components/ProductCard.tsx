@@ -6,32 +6,37 @@ type ProductCardProps = {
   id: string;
   name: string;
   price: number;
-  image?: string;
+  images?: string[];
 };
 
 export default function ProductCard({
   id,
   name,
   price,
-  image,
+  images,
 }: ProductCardProps) {
   const addToCart = useCartStore(
     (state) => state.addToCart
   );
 
+  const mainImage =
+  images && images.length > 0
+    ? images[0]
+    : "";
+
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition">
 
       {/* IMAGE */}
-      {image ? (
-        <img
-          src={image}
-          alt={name}
-          className="w-full aspect-square object-cover"
-        />
-      ) : (
-        <div className="w-full aspect-square bg-gray-200"></div>
-      )}
+      {mainImage ? (
+  <img
+    src={mainImage}
+    alt={name}
+    className="w-full aspect-square object-cover"
+  />
+) : (
+  <div className="w-full aspect-square bg-gray-200"></div>
+)}
 
       {/* CONTENT */}
       <div className="p-3">

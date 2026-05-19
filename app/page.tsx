@@ -22,7 +22,7 @@ type Product = {
 
   price: number;
 
-  image?: string;
+  images?: string[];
 
   description?: string;
 
@@ -256,11 +256,11 @@ export default function Home() {
                     <div className="transform transition duration-300 group-hover:-translate-y-2">
 
                       <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        price={finalPrice}
-                        image={product.image}
-                      />
+  id={product.id}
+  name={product.name}
+  price={finalPrice}
+  images={product.images}
+/>
 
                     </div>
 

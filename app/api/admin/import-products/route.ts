@@ -44,8 +44,12 @@ export async function POST(req: Request) {
             item.description ||
             "",
 
-          image:
-            item.image || "",
+          iimages: [
+  item.image1 || "",
+  item.image2 || "",
+  item.image3 || "",
+  item.image4 || "",
+].filter(Boolean),
 
           price:
             Number(
