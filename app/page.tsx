@@ -138,6 +138,15 @@ export default function Home() {
         </div>
 
         {/* RIGHT */}
+        <div className="flex justify-center">
+
+          <img
+            src="/logo-banner.png"
+            alt="KhairaShop25"
+            className="w-72 md:w-96 drop-shadow-2xl"
+          />
+
+        </div>
 
       </div>
 
