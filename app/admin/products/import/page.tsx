@@ -13,7 +13,10 @@ type ProductRow = {
 
   description?: string;
 
-  image?: string;
+  image1?: string;
+image2?: string;
+image3?: string;
+image4?: string;
 
   price?: number;
 
@@ -124,8 +127,17 @@ export default function ImportProductsPage() {
       category: "Loyang",
       description:
         "Loyang premium anti lengket",
-      image:
-        "https://yourdomain.com/produk.jpg",
+      image1:
+  "https://yourdomain.com/produk1.jpg",
+
+image2:
+  "https://yourdomain.com/produk2.jpg",
+
+image3:
+  "https://yourdomain.com/produk3.jpg",
+
+image4:
+  "https://yourdomain.com/produk4.jpg",
       price: 85000,
       stock: 10,
       weight: 500,
@@ -161,8 +173,17 @@ const downloadVariantTemplate = () => {
       category: "Hijab",
       description:
         "Hijab premium adem",
-      image:
-        "https://yourdomain.com/hijab.jpg",
+      image1:
+  "https://yourdomain.com/hijab1.jpg",
+
+image2:
+  "https://yourdomain.com/hijab2.jpg",
+
+image3:
+  "https://yourdomain.com/hijab3.jpg",
+
+image4:
+  "https://yourdomain.com/hijab4.jpg",
       variantName: "Warna",
       variantValue: "Hitam",
       price: 75000,
@@ -179,8 +200,17 @@ const downloadVariantTemplate = () => {
       category: "Hijab",
       description:
         "Hijab premium adem",
-      image:
-        "https://yourdomain.com/hijab.jpg",
+      image1:
+  "https://yourdomain.com/hijab1.jpg",
+
+image2:
+  "https://yourdomain.com/hijab2.jpg",
+
+image3:
+  "https://yourdomain.com/hijab3.jpg",
+
+image4:
+  "https://yourdomain.com/hijab4.jpg",
       variantName: "Warna",
       variantValue: "Cream",
       price: 75000,
@@ -262,6 +292,10 @@ const downloadVariantTemplate = () => {
                       </th>
 
                       <th className="p-3 text-left">
+  Foto
+</th>
+
+                      <th className="p-3 text-left">
                         Type
                       </th>
 
@@ -293,6 +327,13 @@ const downloadVariantTemplate = () => {
                           <td className="p-3">
                             {row.name}
                           </td>
+
+                          <td className="p-3">
+  {row.image1 ? "1" : "-"} /
+  {row.image2 ? "2" : "-"} /
+  {row.image3 ? "3" : "-"} /
+  {row.image4 ? "4" : "-"}
+</td>
 
                           <td className="p-3">
                             {row.type}
