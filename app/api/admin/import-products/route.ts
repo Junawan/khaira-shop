@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-
 import { adminDb } from "@/lib/firebase-admin";
 
 function slugify(text: string) {
   return text
+    ?.toString()
     .toLowerCase()
+    .trim()
     .replace(/\s+/g, "-")
     .replace(/[^\w-]+/g, "");
 }
@@ -13,34 +14,56 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const products =
-      body.products || [];
+    const products = body.products || [];
 
-    const groupedProducts: Record<
-      string,
-      any
-    > = {};
+    if (!products.length) {
+      return NextResponse.json(
+        {
+          error: "Data excel kosong",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const groupedProducts: Record<string, any> =
+      {};
 
     for (const item of products) {
-      const key = item.name;
+      // ambil nama dengan aman
+      const productName =
+        item.name ||
+        item.Nama ||
+        item.nama ||
+        "";
 
-      // BUAT PRODUCT PERTAMA
+      // skip jika nama kosong
+      if (!productName) continue;
+
+      const key = productName.trim();
+
+      // buat produk pertama
       if (!groupedProducts[key]) {
         groupedProducts[key] = {
-          name: item.name || "",
+          name: key,
 
-          slug: slugify(
-            item.name || ""
-          ),
+          slug: slugify(key),
 
           type:
-            item.type || "single",
+            item.type ||
+            item.Type ||
+            "single",
 
           category:
-            item.category || "",
+            item.category ||
+            item.Category ||
+            "",
 
           description:
-            item.description || "",
+            item.description ||
+            item.Description ||
+            "",
 
           image:
             item.image1 || "",
@@ -80,81 +103,85 @@ export async function POST(req: Request) {
         };
       }
 
-      // HANDLE VARIANT
-      if (item.type === "variant") {
+      // VARIANT
+      if (
+        (item.type || "").toLowerCase() ===
+        "variant"
+      ) {
+        const variantName =
+          item.variantName || "Varian";
 
-  const variantName =
-    item.variantName || "Varian";
+        const existingVariant =
+          groupedProducts[
+            key
+          ].variants.find(
+            (v: any) =>
+              v.name === variantName
+          );
 
-  const existingVariant =
-    groupedProducts[
-      key
-    ].variants.find(
-      (v: any) =>
-        v.name === variantName
-    );
+        // jika belum ada group variant
+        if (!existingVariant) {
+          groupedProducts[
+            key
+          ].variants.push({
+            name: variantName,
 
-  const valueData = {
-    value:
-      item.variantValue || "",
+            values: [],
+          });
+        }
 
-    price:
-      Number(item.price) || 0,
+        // cari lagi setelah dibuat
+        const variantGroup =
+          groupedProducts[
+            key
+          ].variants.find(
+            (v: any) =>
+              v.name === variantName
+          );
 
-    stock:
-      Number(item.stock) || 0,
-  };
+        variantGroup.values.push({
+          value:
+            item.variantValue || "",
 
-  if (existingVariant) {
+          price:
+            Number(item.price) || 0,
 
-    existingVariant.values.push(
-      valueData
-    );
-
-  } else {
-
-    groupedProducts[
-      key
-    ].variants.push({
-      name: variantName,
-
-      values: [valueData],
-    });
-
-  }
-}
+          stock:
+            Number(item.stock) || 0,
+        });
+      }
     }
 
     const finalProducts =
-      Object.values(
-        groupedProducts
-      );
+      Object.values(groupedProducts);
 
-    // SIMPAN KE FIRESTORE
     for (const product of finalProducts) {
       await adminDb
         .collection("products")
         .add({
           ...product,
 
-          createdAt:
-            new Date(),
+          createdAt: new Date(),
+
+          updatedAt: new Date(),
+
+          active: true,
+
+          featured: false,
         });
     }
 
     return NextResponse.json({
       success: true,
 
-      total:
-        finalProducts.length,
+      total: finalProducts.length,
     });
   } catch (error) {
     console.log(error);
 
     return NextResponse.json(
       {
-        error:
-          "Import gagal",
+        error: "Import gagal",
       },
       {
         status: 500,

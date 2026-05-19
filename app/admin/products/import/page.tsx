@@ -14,9 +14,12 @@ type ProductRow = {
   description?: string;
 
   image1?: string;
-image2?: string;
-image3?: string;
-image4?: string;
+
+  image2?: string;
+
+  image3?: string;
+
+  image4?: string;
 
   price?: number;
 
@@ -63,94 +66,95 @@ export default function ImportProductsPage() {
       ];
 
     const raw =
-  XLSX.utils.sheet_to_json(sheet);
+      XLSX.utils.sheet_to_json(
+        sheet,
+        {
+          header: 1,
+        }
+      );
 
-const formatted: ProductRow[] =
-  raw.map((item: any) => ({
-    name:
-      item.name ||
-      item.Nama ||
-      "",
+    const rowsData = raw as any[];
 
-    type:
-      item.type ||
-      item.Type ||
-      "single",
+    const parsed: ProductRow[] =
+      rowsData
+        .slice(1)
+        .map((row: any) => ({
+          name:
+            String(
+              row[0] || ""
+            ).trim(),
 
-    category:
-      item.category ||
-      item.Category ||
-      "",
+          type:
+            String(
+              row[1] || "single"
+            ).trim(),
 
-    description:
-      item.description ||
-      item.Description ||
-      "",
+          category:
+            String(
+              row[2] || ""
+            ).trim(),
 
-    image1:
-      item.image1 ||
-      item.Image1 ||
-      "",
+          description:
+            String(
+              row[3] || ""
+            ).trim(),
 
-    image2:
-      item.image2 ||
-      item.Image2 ||
-      "",
+          image1:
+            String(
+              row[4] || ""
+            ).trim(),
 
-    image3:
-      item.image3 ||
-      item.Image3 ||
-      "",
+          image2:
+            String(
+              row[5] || ""
+            ).trim(),
 
-    image4:
-      item.image4 ||
-      item.Image4 ||
-      "",
+          image3:
+            String(
+              row[6] || ""
+            ).trim(),
 
-    price: Number(
-  item.price ||
-  item.Price ||
-  item.Harga ||
-  item.harga ||
-  0
-),
+          image4:
+            String(
+              row[7] || ""
+            ).trim(),
 
-    stock: Number(
-      item.stock ||
-      item.Stock ||
-      0
-    ),
+          variantName:
+            String(
+              row[8] || ""
+            ).trim(),
 
-    weight: Number(
-      item.weight || 0
-    ),
+          variantValue:
+            String(
+              row[9] || ""
+            ).trim(),
 
-    packageLength: Number(
-      item.packageLength || 0
-    ),
+          price:
+            Number(row[10]) || 0,
 
-    packageWidth: Number(
-      item.packageWidth || 0
-    ),
+          stock:
+            Number(row[11]) || 0,
 
-    packageHeight: Number(
-      item.packageHeight || 0
-    ),
+          weight:
+            Number(row[12]) || 0,
 
-    variantName:
-      item.variantName ||
-      item.VariantName ||
-      "",
+          packageLength:
+            Number(row[13]) || 0,
 
-    variantValue:
-      item.variantValue ||
-      item.VariantValue ||
-      "",
-  }));
+          packageWidth:
+            Number(row[14]) || 0,
 
-setRows(formatted);
+          packageHeight:
+            Number(row[15]) || 0,
+        }))
+        .filter(
+          (item) =>
+            item.name !== ""
+        );
 
-console.log(formatted);
+    console.log(parsed);
+
+    setRows(parsed);
   };
 
   const handleImport =
@@ -179,18 +183,20 @@ console.log(formatted);
           await response.json();
 
         if (!response.ok) {
+          console.log(data);
+
           alert(
             "Import gagal"
           );
-
-          console.log(data);
 
           return;
         }
 
         alert(
-          "Import berhasil"
+          `Import berhasil ${data.total} produk`
         );
+
+        setRows([]);
       } catch (error) {
         console.log(error);
 
@@ -202,129 +208,167 @@ console.log(formatted);
       }
     };
 
-    const downloadSingleTemplate = () => {
-  const data = [
-    {
-      name: "Loyang Pai Bali",
-      type: "single",
-      category: "Loyang",
-      description:
-        "Loyang premium anti lengket",
-      image1:
-  "https://yourdomain.com/produk1.jpg",
+  const downloadSingleTemplate =
+    () => {
+      const data = [
+        {
+          name:
+            "Loyang Pai Bali",
 
-image2:
-  "https://yourdomain.com/produk2.jpg",
+          type: "single",
 
-image3:
-  "https://yourdomain.com/produk3.jpg",
+          category:
+            "Loyang",
 
-image4:
-  "https://yourdomain.com/produk4.jpg",
-      price: 85000,
-      stock: 10,
-      weight: 500,
-      packageLength: 20,
-      packageWidth: 20,
-      packageHeight: 10,
-    },
-  ];
+          description:
+            "Loyang premium anti lengket",
 
-  const worksheet =
-    XLSX.utils.json_to_sheet(data);
+          image1:
+            "https://yourdomain.com/produk1.jpg",
 
-  const workbook =
-    XLSX.utils.book_new();
+          image2:
+            "https://yourdomain.com/produk2.jpg",
 
-  XLSX.utils.book_append_sheet(
-    workbook,
-    worksheet,
-    "Single Product"
-  );
+          image3:
+            "https://yourdomain.com/produk3.jpg",
 
-  XLSX.writeFile(
-    workbook,
-    "template-produk-single.xlsx"
-  );
-};
+          image4:
+            "https://yourdomain.com/produk4.jpg",
 
-const downloadVariantTemplate = () => {
-  const data = [
+          variantName: "",
 
-    {
-      Name: "Hijab Paris",
-      Type: "variant",
-      Category: "Hijab",
-      Description:
-        "Hijab premium adem",
-      Image1:
-  "https://yourdomain.com/hijab1.jpg",
+          variantValue: "",
 
-Image2:
-  "https://yourdomain.com/hijab2.jpg",
+          price: 85000,
 
-Image3:
-  "https://yourdomain.com/hijab3.jpg",
+          stock: 10,
 
-Image4:
-  "https://yourdomain.com/hijab4.jpg",
-      VariantName: "Warna",
-      VariantValue: "Cream",
-      Price: 75000,
-      Stock: 8,
-      Weight: 300,
-      PackageLength: 15,
-      PackageWidth: 15,
-      PackageHeight: 3,
-    },
-  ];
+          weight: 500,
 
-  const worksheet =
-    XLSX.utils.json_to_sheet(data);
+          packageLength: 20,
 
-  const workbook =
-    XLSX.utils.book_new();
+          packageWidth: 20,
 
-  XLSX.utils.book_append_sheet(
-    workbook,
-    worksheet,
-    "Variant Product"
-  );
+          packageHeight: 10,
+        },
+      ];
 
-  XLSX.writeFile(
-    workbook,
-    "template-produk-variant.xlsx"
-  );
-};
+      const worksheet =
+        XLSX.utils.json_to_sheet(
+          data
+        );
+
+      const workbook =
+        XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Single Product"
+      );
+
+      XLSX.writeFile(
+        workbook,
+        "template-produk-single.xlsx"
+      );
+    };
+
+  const downloadVariantTemplate =
+    () => {
+      const data = [
+        {
+          name:
+            "Hijab Paris",
+
+          type: "variant",
+
+          category:
+            "Hijab",
+
+          description:
+            "Hijab premium adem",
+
+          image1:
+            "https://yourdomain.com/hijab1.jpg",
+
+          image2:
+            "https://yourdomain.com/hijab2.jpg",
+
+          image3:
+            "https://yourdomain.com/hijab3.jpg",
+
+          image4:
+            "https://yourdomain.com/hijab4.jpg",
+
+          variantName:
+            "Warna",
+
+          variantValue:
+            "Cream",
+
+          price: 75000,
+
+          stock: 8,
+
+          weight: 300,
+
+          packageLength: 15,
+
+          packageWidth: 15,
+
+          packageHeight: 3,
+        },
+      ];
+
+      const worksheet =
+        XLSX.utils.json_to_sheet(
+          data
+        );
+
+      const workbook =
+        XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Variant Product"
+      );
+
+      XLSX.writeFile(
+        workbook,
+        "template-produk-variant.xlsx"
+      );
+    };
 
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">
-
       <div className="max-w-7xl mx-auto">
-
         <div className="bg-white rounded-3xl p-8 shadow-sm">
-
           <h1 className="text-4xl font-bold mb-8">
             Import Produk Excel
           </h1>
 
           <div className="flex flex-wrap gap-4 mb-6">
+            <button
+              onClick={
+                downloadSingleTemplate
+              }
+              className="bg-blue-600 text-white px-5 py-3 rounded-2xl"
+            >
+              Download Template
+              Produk Satuan
+            </button>
 
-  <button
-    onClick={downloadSingleTemplate}
-    className="bg-blue-600 text-white px-5 py-3 rounded-2xl"
-  >
-    Download Template Produk Satuan
-  </button>
-
-  <button
-    onClick={downloadVariantTemplate}
-    className="bg-purple-600 text-white px-5 py-3 rounded-2xl"
-  >
-    Download Template Produk Varian
-  </button>
-
-</div>
+            <button
+              onClick={
+                downloadVariantTemplate
+              }
+              className="bg-purple-600 text-white px-5 py-3 rounded-2xl"
+            >
+              Download Template
+              Produk Varian
+            </button>
+          </div>
 
           <input
             type="file"
@@ -335,22 +379,17 @@ Image4:
 
           {rows.length > 0 && (
             <>
-
               <div className="overflow-auto border rounded-2xl">
-
                 <table className="w-full text-sm">
-
                   <thead className="bg-black text-white">
-
                     <tr>
-
                       <th className="p-3 text-left">
                         Nama
                       </th>
 
                       <th className="p-3 text-left">
-  Foto
-</th>
+                        Foto
+                      </th>
 
                       <th className="p-3 text-left">
                         Type
@@ -367,37 +406,58 @@ Image4:
                       <th className="p-3 text-left">
                         Variant
                       </th>
-
                     </tr>
-
                   </thead>
 
                   <tbody>
-
                     {rows.map(
-                      (row, index) => (
+                      (
+                        row,
+                        index
+                      ) => (
                         <tr
                           key={index}
                           className="border-t"
                         >
-
                           <td className="p-3">
                             {row.name}
                           </td>
 
                           <td className="p-3">
-  {row.image1 ? "1" : "-"} /
-  {row.image2 ? "2" : "-"} /
-  {row.image3 ? "3" : "-"} /
-  {row.image4 ? "4" : "-"}
-</td>
+                            {
+                              row.image1
+                                ? "1"
+                                : "-"
+                            }
+                            {" / "}
+                            {
+                              row.image2
+                                ? "2"
+                                : "-"
+                            }
+                            {" / "}
+                            {
+                              row.image3
+                                ? "3"
+                                : "-"
+                            }
+                            {" / "}
+                            {
+                              row.image4
+                                ? "4"
+                                : "-"
+                            }
+                          </td>
 
                           <td className="p-3">
                             {row.type}
                           </td>
 
                           <td className="p-3">
-                            {row.price}
+                            Rp{" "}
+                            {Number(
+                              row.price || 0
+                            ).toLocaleString()}
                           </td>
 
                           <td className="p-3">
@@ -406,25 +466,23 @@ Image4:
 
                           <td className="p-3">
                             {row.variantName}
-                            :
-                            {" "}
+                            {row.variantName &&
+                              ":"}{" "}
                             {
                               row.variantValue
                             }
                           </td>
-
                         </tr>
                       )
                     )}
-
                   </tbody>
-
                 </table>
-
               </div>
 
               <button
-                onClick={handleImport}
+                onClick={
+                  handleImport
+                }
                 disabled={loading}
                 className="mt-6 bg-black text-white px-6 py-4 rounded-2xl"
               >
@@ -432,14 +490,10 @@ Image4:
                   ? "Importing..."
                   : "Import Produk"}
               </button>
-
             </>
           )}
-
         </div>
-
       </div>
-
     </main>
   );
 }
