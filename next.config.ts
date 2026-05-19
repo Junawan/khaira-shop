@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  webpack: (config) => {
+    config.externals.push({
+      pdfkit: "commonjs pdfkit",
+    });
+
+    return config;
+  },
 };
 
 export default nextConfig;
