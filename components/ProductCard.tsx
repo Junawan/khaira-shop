@@ -20,23 +20,27 @@ export default function ProductCard({
   );
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition">
+
+      {/* IMAGE */}
       {image ? (
         <img
           src={image}
           alt={name}
-          className="w-full h-64 object-cover"
+          className="w-full aspect-square object-cover"
         />
       ) : (
-        <div className="w-full h-64 bg-gray-200"></div>
+        <div className="w-full aspect-square bg-gray-200"></div>
       )}
 
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-gray-800">
+      {/* CONTENT */}
+      <div className="p-3">
+
+        <h3 className="text-sm md:text-base font-medium text-gray-800 line-clamp-2 leading-5 min-h-[40px]">
           {name}
         </h3>
 
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-base font-bold text-black">
           Rp{price.toLocaleString()}
         </p>
 
