@@ -18,14 +18,18 @@ import {
 
 import { useCartStore } from "@/store/cart";
 
-type Variant = {
-  name: string;
-
+type VariantValue = {
   value: string;
 
   price: number;
 
   stock?: number;
+};
+
+type Variant = {
+  name: string;
+
+  values: VariantValue[];
 };
 
 type Product = {
@@ -69,9 +73,9 @@ export default function ProductDetailPage() {
     useState(true);
 
   const [
-    selectedVariant,
-    setSelectedVariant,
-  ] = useState<Variant | null>(null);
+  selectedVariant,
+  setSelectedVariant,
+] = useState<VariantValue | null>(null);
 
   const [quantity, setQuantity] =
     useState(1);
@@ -143,13 +147,14 @@ images: data.images || [],
 }
 
           if (
-            productData.variants &&
-            productData.variants.length > 0
-          ) {
-            setSelectedVariant(
-              productData.variants[0]
-            );
-          }
+  productData.variants &&
+  productData.variants.length > 0 &&
+  productData.variants[0].values.length > 0
+) {
+  setSelectedVariant(
+    productData.variants[0].values[0]
+  );
+}
         }
       } catch (error) {
         console.error(error);
@@ -197,7 +202,10 @@ images: data.images || [],
 
     price: Number(finalPrice),
 
-    image: product.image || "",
+    image:
+  product.images?.[0] ||
+  product.image ||
+  "",
 
     quantity: Number(quantity),
 
@@ -238,7 +246,10 @@ images: data.images || [],
 
             {selectedImage ? (
   <Image
-    src={selectedImage}
+  src={
+    selectedImage ||
+    "/placeholder.png"
+  }
     alt={product.name}
     fill
     sizes="(max-width: 768px) 100vw, 50vw"
@@ -255,46 +266,48 @@ images: data.images || [],
 {/* THUMBNAILS */}
 
 {product.images &&
-  product.images.length > 0 && (
+product.images.filter(Boolean).length > 0 && (
 
-    <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
+  <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
 
-      {product.images.map(
-        (img, index) => (
+    {product.images
+      .filter(
+        (img): img is string => Boolean(img)
+      )
+      .map((img, index) => (
 
-          <button
-            key={index}
-            onClick={() =>
-              setSelectedImage(img)
+        <button
+          key={index}
+          onClick={() =>
+            setSelectedImage(img)
+          }
+          className={`
+            relative
+            w-20
+            h-20
+            rounded-xl
+            overflow-hidden
+            border-2
+            flex-shrink-0
+            ${
+              selectedImage === img
+                ? "border-black"
+                : "border-gray-200"
             }
-            className={`
-              relative
-              w-20
-              h-20
-              rounded-xl
-              overflow-hidden
-              border-2
-              flex-shrink-0
-              ${
-                selectedImage === img
-                  ? "border-black"
-                  : "border-gray-200"
-              }
-            `}
-          >
+          `}
+        >
 
-            <Image
-              src={img}
-              alt={`thumb-${index}`}
-              fill
-              className="object-cover"
-            />
+          <Image
+            src={img}
+            alt={`thumb-${index}`}
+            fill
+            className="object-cover"
+          />
 
-          </button>
-        )
-      )}
+        </button>
+      ))}
 
-    </div>
+  </div>
 )}
 
 </div>
@@ -329,23 +342,44 @@ images: data.images || [],
                 <div className="flex flex-wrap gap-3">
 
                   {product.variants.map(
-  (variant, index) => (
-    <button
-      key={index}
-      onClick={() =>
-        setSelectedVariant(
-          variant
-        )
-      }
-      className={`px-5 py-3 rounded-xl border transition ${
-        selectedVariant?.value ===
-        variant.value
-          ? "bg-black text-white border-black"
-          : "bg-white border-gray-300"
-      }`}
+  (variant, variantIndex) => (
+    <div
+      key={variantIndex}
+      className="mb-5"
     >
-      {variant.value}
-    </button>
+
+      <p className="font-medium mb-3">
+        {variant.name}
+      </p>
+
+      <div className="flex flex-wrap gap-3">
+
+        {variant.values.map(
+          (valueItem, valueIndex) => (
+            <button
+              key={valueIndex}
+              onClick={() =>
+                setSelectedVariant(
+                  valueItem
+                )
+              }
+              className={`px-5 py-3 rounded-xl border transition ${
+                selectedVariant?.value ===
+                valueItem.value
+                  ? "bg-black text-white border-black"
+                  : "bg-white border-gray-300"
+              }`}
+            >
+
+              {valueItem.value}
+
+            </button>
+          )
+        )}
+
+      </div>
+
+    </div>
   )
 )}
 

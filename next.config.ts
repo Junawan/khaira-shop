@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cf.shopee.co.id",
       },
+
+      {
+        protocol: "https",
+        hostname:
+          "res.cloudinary.com",
+      },
     ],
   },
 
