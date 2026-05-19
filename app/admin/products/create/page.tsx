@@ -12,10 +12,14 @@ import { db } from "@/lib/firebase";
 
 import { useRouter } from "next/navigation";
 
-type Variant = {
-  name: string;
+type VariantValue = {
   value: string;
   price: number;
+};
+
+type Variant = {
+  name: string;
+  values: VariantValue[];
 };
 
 type ProductForm = {
@@ -338,10 +342,14 @@ export default function CreateProductPage() {
                     variants: [
                       ...form.variants,
                       {
-                        name: "",
-                        value: "",
-                        price: 0,
-                      },
+  name: "",
+  values: [
+    {
+      value: "",
+      price: 0,
+    },
+  ],
+}
                     ],
                   });
                 }}
@@ -357,157 +365,248 @@ export default function CreateProductPage() {
             <div className="space-y-4">
 
               {form.variants.map(
+  (
+    variant,
+    variantIndex
+  ) => (
+    <div
+      key={variantIndex}
+      className="border rounded-2xl p-4 space-y-4"
+    >
+
+      {/* NAMA VARIANT */}
+
+      <div>
+
+        <p className="mb-2 text-sm font-medium">
+
+          Nama Variant
+
+        </p>
+
+        <input
+          type="text"
+          value={
+            variant.name
+          }
+          onChange={(e) => {
+            const updated =
+              [
+                ...form.variants,
+              ];
+
+            updated[
+              variantIndex
+            ].name =
+              e.target.value;
+
+            setForm({
+              ...form,
+              variants:
+                updated,
+            });
+          }}
+          placeholder="Contoh: Ukuran"
+          className="w-full border rounded-xl px-4 py-3"
+        />
+
+      </div>
+
+      {/* VALUES */}
+
+      <div className="space-y-4">
+
+        {variant.values.map(
+          (
+            item,
+            valueIndex
+          ) => (
+            <div
+              key={valueIndex}
+              className="border rounded-xl p-4 space-y-3"
+            >
+
+              <div>
+
+                <p className="text-sm mb-2">
+
+                  Value
+
+                </p>
+
+                <input
+                  type="text"
+                  value={
+                    item.value
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const updated =
+                      [
+                        ...form.variants,
+                      ];
+
+                    updated[
+                      variantIndex
+                    ].values[
+                      valueIndex
+                    ].value =
+                      e.target.value;
+
+                    setForm({
+                      ...form,
+                      variants:
+                        updated,
+                    });
+                  }}
+                  placeholder="Contoh: XL"
+                  className="w-full border rounded-xl px-4 py-3"
+                />
+
+              </div>
+
+              <div>
+
+                <p className="text-sm mb-2">
+
+                  Harga Variant
+
+                </p>
+
+                <input
+                  type="number"
+                  value={
+                    item.price
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const updated =
+                      [
+                        ...form.variants,
+                      ];
+
+                    updated[
+                      variantIndex
+                    ].values[
+                      valueIndex
+                    ].price =
+                      Number(
+                        e.target
+                          .value
+                      );
+
+                    setForm({
+                      ...form,
+                      variants:
+                        updated,
+                    });
+                  }}
+                  className="w-full border rounded-xl px-4 py-3"
+                />
+
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const updated =
+                    [
+                      ...form.variants,
+                    ];
+
+                  updated[
+                    variantIndex
+                  ].values =
+                    updated[
+                      variantIndex
+                    ].values.filter(
+                      (
+                        _,
+                        i
+                      ) =>
+                        i !==
+                        valueIndex
+                    );
+
+                  setForm({
+                    ...form,
+                    variants:
+                      updated,
+                  });
+                }}
+                className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm"
+              >
+
+                Hapus Value
+
+              </button>
+
+            </div>
+          )
+        )}
+
+      </div>
+
+      {/* TAMBAH VALUE */}
+
+      <button
+        type="button"
+        onClick={() => {
+          const updated =
+            [
+              ...form.variants,
+            ];
+
+          updated[
+            variantIndex
+          ].values.push({
+            value: "",
+            price: 0,
+          });
+
+          setForm({
+            ...form,
+            variants:
+              updated,
+          });
+        }}
+        className="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm"
+      >
+
+        Tambah Value
+
+      </button>
+
+      {/* HAPUS VARIANT */}
+
+      <button
+        type="button"
+        onClick={() => {
+          setForm({
+            ...form,
+            variants:
+              form.variants.filter(
                 (
-                  variant,
-                  index
-                ) => (
-                  <div
-                    key={index}
-                    className="border rounded-2xl p-4 space-y-4"
-                  >
+                  _,
+                  i
+                ) =>
+                  i !==
+                  variantIndex
+              ),
+          });
+        }}
+        className="bg-black text-white px-4 py-2 rounded-xl text-sm ml-3"
+      >
 
-                    <div>
+        Hapus Variant
 
-                      <p className="mb-2 text-sm font-medium">
+      </button>
 
-                        Nama Variant
-
-                      </p>
-
-                      <input
-                        type="text"
-                        value={
-                          variant.name
-                        }
-                        onChange={(
-                          e
-                        ) => {
-                          const updated =
-                            [
-                              ...form.variants,
-                            ];
-
-                          updated[
-                            index
-                          ].name =
-                            e.target.value;
-
-                          setForm({
-                            ...form,
-                            variants:
-                              updated,
-                          });
-                        }}
-                        placeholder="Contoh: Warna"
-                        className="w-full border rounded-xl px-4 py-3"
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <p className="mb-2 text-sm font-medium">
-
-                        Value
-
-                      </p>
-
-                      <input
-                        type="text"
-                        value={
-                          variant.value
-                        }
-                        onChange={(
-                          e
-                        ) => {
-                          const updated =
-                            [
-                              ...form.variants,
-                            ];
-
-                          updated[
-                            index
-                          ].value =
-                            e.target.value;
-
-                          setForm({
-                            ...form,
-                            variants:
-                              updated,
-                          });
-                        }}
-                        placeholder="Contoh: Merah"
-                        className="w-full border rounded-xl px-4 py-3"
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <p className="mb-2 text-sm font-medium">
-
-                        Harga Variant
-
-                      </p>
-
-                      <input
-                        type="number"
-                        value={
-                          variant.price
-                        }
-                        onChange={(
-                          e
-                        ) => {
-                          const updated =
-                            [
-                              ...form.variants,
-                            ];
-
-                          updated[
-                            index
-                          ].price =
-                            Number(
-                              e.target
-                                .value
-                            );
-
-                          setForm({
-                            ...form,
-                            variants:
-                              updated,
-                          });
-                        }}
-                        className="w-full border rounded-xl px-4 py-3"
-                      />
-
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setForm({
-                          ...form,
-                          variants:
-                            form.variants.filter(
-                              (
-                                _,
-                                i
-                              ) =>
-                                i !==
-                                index
-                            ),
-                        });
-                      }}
-                      className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm"
-                    >
-
-                      Hapus Variant
-
-                    </button>
-
-                  </div>
-                )
-              )}
+    </div>
+  )
+)}
 
             </div>
 
