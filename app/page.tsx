@@ -74,6 +74,88 @@ export default function Home() {
 
       <Navbar />
 
+      {/* PROMO BANNER */}
+
+<section className="px-6 pt-6">
+
+  <div className="max-w-7xl mx-auto">
+
+    <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-10 md:p-14 shadow-2xl">
+
+      {/* blur decoration */}
+      <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/20 rounded-full blur-3xl"></div>
+
+      <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-yellow-300/20 rounded-full blur-3xl"></div>
+
+      <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
+
+        {/* LEFT */}
+        <div>
+
+          <p className="uppercase tracking-[0.3em] text-white/80 text-sm font-semibold mb-4">
+
+            Belanja Lebih Hemat
+
+          </p>
+
+          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+
+            Harga Lebih Murah
+            Dari Marketplace
+
+          </h2>
+
+          <p className="mt-6 text-white/90 text-lg leading-8 max-w-xl">
+
+            Nikmati pengalaman belanja langsung tanpa biaya admin,
+            tanpa biaya layanan, dan harga lebih hemat untuk semua
+            perlengkapan baking favorit Anda.
+
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-4">
+
+            <div className="bg-white/15 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white font-medium">
+
+              ✅ Tanpa Biaya Admin
+
+            </div>
+
+            <div className="bg-white/15 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white font-medium">
+
+              ✅ Harga Lebih Murah
+
+            </div>
+
+            <div className="bg-white/15 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white font-medium">
+
+              ✅ Pengiriman Cepat
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex justify-center">
+
+          <img
+            src="/logo.png"
+            alt="KhairaShop25"
+            className="w-72 md:w-96 drop-shadow-2xl"
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
       {/* HERO */}
 
       <section className="px-6 py-24 text-center">
