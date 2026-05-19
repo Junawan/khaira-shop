@@ -8,7 +8,7 @@ import {
   StandardFonts,
 } from "pdf-lib";
 
-import bwipjs from "bwip-js";
+const bwipjs = require("bwip-js");
 
 export async function GET(
   req: Request
@@ -233,7 +233,7 @@ export async function GET(
       await pdfDoc.save();
 
     return new Response(
-      pdfBytes,
+  Buffer.from(pdfBytes),
       {
         headers: {
           "Content-Type":
