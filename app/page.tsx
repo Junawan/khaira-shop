@@ -138,15 +138,6 @@ export default function Home() {
         </div>
 
         {/* RIGHT */}
-        <div className="flex justify-center">
-
-          <img
-            src="/logo.png"
-            alt="KhairaShop25"
-            className="w-72 md:w-96 drop-shadow-2xl"
-          />
-
-        </div>
 
       </div>
 
@@ -165,14 +156,6 @@ export default function Home() {
           <p className="text-green-700 font-semibold mb-4 tracking-widest uppercase">
             KhairaShop25
           </p>
-
-          <h1 className="text-5xl md:text-7xl font-black text-gray-900 leading-tight">
-
-            Peralatan Baking
-            Terlengkap Untuk
-            Dapur Impian Anda
-
-          </h1>
 
           <p className="mt-8 text-gray-600 text-lg md:text-xl leading-8 max-w-2xl mx-auto">
 
