@@ -76,65 +76,52 @@ export default function Home() {
 
       {/* HERO */}
 
-      {/* HERO */}
+      <section className="px-6 py-24 text-center">
 
-<section className="px-6 py-24 text-center">
+        <div className="max-w-4xl mx-auto">
 
-  <div className="max-w-4xl mx-auto">
+          <p className="text-green-700 font-semibold mb-4 tracking-widest uppercase">
+            KhairaShop25
+          </p>
 
-    {/* LOGO */}
-    <div className="flex justify-center mb-8">
+          <h1 className="text-5xl md:text-7xl font-black text-gray-900 leading-tight">
 
-      <img
-        src="/logo.png"
-        alt="KhairaShop25"
-        className="w-40 md:w-52 drop-shadow-2xl"
-      />
+            Peralatan Baking
+            Terlengkap Untuk
+            Dapur Impian Anda
 
-    </div>
+          </h1>
 
-    <p className="text-green-700 font-semibold mb-4 tracking-widest uppercase">
-      KhairaShop25
-    </p>
+          <p className="mt-8 text-gray-600 text-lg md:text-xl leading-8 max-w-2xl mx-auto">
 
-    <h1 className="text-5xl md:text-7xl font-black text-gray-900 leading-tight">
+            Temukan loyang premium,
+            alat baking berkualitas,
+            dan perlengkapan dapur terbaik
+            dengan harga terjangkau.
 
-      Peralatan Baking
-      Terlengkap Untuk
-      Dapur Impian Anda
+          </p>
 
-    </h1>
+          <div className="mt-10 flex justify-center gap-4 flex-wrap">
 
-    <p className="mt-8 text-gray-600 text-lg md:text-xl leading-8 max-w-2xl mx-auto">
+            <a
+              href="#products"
+              className="bg-black text-white px-8 py-4 rounded-2xl hover:opacity-90 transition"
+            >
+              Belanja Sekarang
+            </a>
 
-      Temukan loyang premium,
-      alat baking berkualitas,
-      dan perlengkapan dapur terbaik
-      dengan harga terjangkau.
+            <a
+              href="/cart"
+              className="bg-white border border-gray-300 px-8 py-4 rounded-2xl hover:bg-gray-100 transition"
+            >
+              Lihat Keranjang
+            </a>
 
-    </p>
+          </div>
 
-    <div className="mt-10 flex justify-center gap-4 flex-wrap">
+        </div>
 
-      <a
-        href="#products"
-        className="bg-black text-white px-8 py-4 rounded-2xl hover:opacity-90 transition"
-      >
-        Belanja Sekarang
-      </a>
-
-      <a
-        href="/cart"
-        className="bg-white border border-gray-300 px-8 py-4 rounded-2xl hover:bg-gray-100 transition"
-      >
-        Lihat Keranjang
-      </a>
-
-    </div>
-
-  </div>
-
-</section>
+      </section>
 
       {/* PRODUCTS */}
 
