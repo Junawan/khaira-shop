@@ -29,10 +29,14 @@ type Product = {
   description?: string;
 
   variants?: {
-    name: string;
+  name: string;
+
+  values: {
+    value: string;
 
     price: number;
   }[];
+}[];
 };
 
 export default function Home() {
@@ -243,10 +247,13 @@ export default function Home() {
               {products.map((product) => {
 
                 const finalPrice =
-                  product.variants &&
-                  product.variants.length > 0
-                    ? product.variants[0].price
-                    : product.price;
+  product.variants &&
+  product.variants.length > 0 &&
+  product.variants[0].values &&
+  product.variants[0].values.length > 0
+    ? product.variants[0].values[0]
+        .price
+    : product.price;
 
                 return (
                   <Link
