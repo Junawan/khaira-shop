@@ -40,9 +40,6 @@ export async function GET(
 
     const pdf = new PDFDocument({
   margin: 40,
-  font:
-    process.cwd() +
-    "/public/fonts/Arial.ttf",
 });
 
     const chunks: Uint8Array[] =
