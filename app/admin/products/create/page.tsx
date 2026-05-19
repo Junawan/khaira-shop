@@ -1,0 +1,450 @@
+"use client";
+
+import { useState } from "react";
+
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
+import { useRouter } from "next/navigation";
+
+type Product = {
+  name: string;
+
+  price: number;
+
+  stock: number;
+
+  category?: string;
+
+  image?: string;
+
+  description?: string;
+
+  active?: boolean;
+
+  featured?: boolean;
+};
+
+export default function CreateProductPage() {
+  const router = useRouter();
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [uploading, setUploading] =
+    useState(false);
+
+  const [form, setForm] =
+    useState<Product>({
+      name: "",
+
+      price: 0,
+
+      stock: 0,
+
+      category: "",
+
+      image: "",
+
+      description: "",
+
+      active: true,
+
+      featured: false,
+    });
+
+  // UPLOAD IMAGE
+  const handleUploadImage =
+    async (file: File) => {
+      try {
+        setUploading(true);
+
+        const formData =
+          new FormData();
+
+        formData.append(
+          "file",
+          file
+        );
+
+        const response =
+          await fetch(
+            "/api/upload-image",
+            {
+              method: "POST",
+
+              body: formData,
+            }
+          );
+
+        const data =
+          await response.json();
+
+        console.log(data);
+
+        if (!response.ok) {
+          alert(
+            data.error ||
+              "Upload gagal"
+          );
+
+          return;
+        }
+
+        setForm((prev) => ({
+          ...prev,
+          image: data.url,
+        }));
+      } catch (error) {
+        console.log(error);
+
+        alert(
+          "Upload error"
+        );
+      } finally {
+        setUploading(false);
+      }
+    };
+
+  // CREATE PRODUCT
+  const handleCreate =
+    async () => {
+      try {
+        setSaving(true);
+
+        await addDoc(
+          collection(
+            db,
+            "products"
+          ),
+          {
+            ...form,
+
+            createdAt:
+              serverTimestamp(),
+
+            updatedAt:
+              serverTimestamp(),
+          }
+        );
+
+        alert(
+          "Produk berhasil dibuat"
+        );
+
+        router.push(
+          "/admin/products"
+        );
+      } catch (error) {
+        console.log(error);
+
+        alert(
+          "Gagal membuat produk"
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
+
+  return (
+    <main className="min-h-screen bg-[#faf7f2] p-6">
+
+      <div className="max-w-3xl mx-auto bg-white rounded-3xl p-8 shadow-sm">
+
+        <h1 className="text-4xl font-bold mb-10">
+
+          Create Produk
+
+        </h1>
+
+        <div className="space-y-6">
+
+          {/* IMAGE */}
+
+          <div>
+
+            <p className="font-semibold mb-3">
+
+              Gambar Produk
+
+            </p>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file =
+                  e.target
+                    .files?.[0];
+
+                if (file) {
+                  handleUploadImage(
+                    file
+                  );
+                }
+              }}
+              className="w-full border rounded-2xl px-4 py-3"
+            />
+
+            {uploading && (
+              <p className="mt-3 text-sm text-gray-500">
+
+                Uploading...
+
+              </p>
+            )}
+
+            {form.image && (
+              <img
+                src={form.image}
+                alt="preview"
+                className="w-48 h-48 object-cover rounded-2xl mt-5"
+              />
+            )}
+
+          </div>
+
+          {/* NAME */}
+
+          <div>
+
+            <p className="font-semibold mb-3">
+
+              Nama Produk
+
+            </p>
+
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  name:
+                    e.target.value,
+                })
+              }
+              className="w-full border rounded-2xl px-4 py-3"
+            />
+
+          </div>
+
+          {/* DESCRIPTION */}
+
+          <div>
+
+            <p className="font-semibold mb-3">
+
+              Deskripsi
+
+            </p>
+
+            <textarea
+              value={
+                form.description ||
+                ""
+              }
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  description:
+                    e.target
+                      .value,
+                })
+              }
+              className="w-full border rounded-2xl px-4 py-3 h-40"
+            />
+
+          </div>
+
+          {/* PRICE + STOCK */}
+
+          <div className="grid md:grid-cols-2 gap-6">
+
+            <div>
+
+              <p className="font-semibold mb-3">
+
+                Harga
+
+              </p>
+
+              <input
+                type="number"
+                value={form.price}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    price:
+                      Number(
+                        e.target
+                          .value
+                      ),
+                  })
+                }
+                className="w-full border rounded-2xl px-4 py-3"
+              />
+
+            </div>
+
+            <div>
+
+              <p className="font-semibold mb-3">
+
+                Stock
+
+              </p>
+
+              <input
+                type="number"
+                value={form.stock}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    stock:
+                      Number(
+                        e.target
+                          .value
+                      ),
+                  })
+                }
+                className="w-full border rounded-2xl px-4 py-3"
+              />
+
+            </div>
+
+          </div>
+
+          {/* CATEGORY */}
+
+          <div>
+
+            <p className="font-semibold mb-3">
+
+              Kategori
+
+            </p>
+
+            <input
+              type="text"
+              value={
+                form.category ||
+                ""
+              }
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  category:
+                    e.target
+                      .value,
+                })
+              }
+              className="w-full border rounded-2xl px-4 py-3"
+            />
+
+          </div>
+
+          {/* ACTIVE */}
+
+          <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-4">
+
+            <div>
+
+              <p className="font-semibold">
+
+                Active Product
+
+              </p>
+
+              <p className="text-sm text-gray-500">
+
+                Produk tampil di toko
+
+              </p>
+
+            </div>
+
+            <input
+              type="checkbox"
+              checked={
+                form.active
+              }
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  active:
+                    e.target
+                      .checked,
+                })
+              }
+              className="w-5 h-5"
+            />
+
+          </div>
+
+          {/* FEATURED */}
+
+          <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-4">
+
+            <div>
+
+              <p className="font-semibold">
+
+                Featured Product
+
+              </p>
+
+              <p className="text-sm text-gray-500">
+
+                Produk unggulan
+
+              </p>
+
+            </div>
+
+            <input
+              type="checkbox"
+              checked={
+                form.featured
+              }
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  featured:
+                    e.target
+                      .checked,
+                })
+              }
+              className="w-5 h-5"
+            />
+
+          </div>
+
+          {/* BUTTON */}
+
+          <button
+            onClick={
+              handleCreate
+            }
+            disabled={saving}
+            className="w-full bg-black text-white py-4 rounded-2xl text-lg font-semibold"
+          >
+
+            {saving
+              ? "Saving..."
+              : "Create Produk"}
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </main>
+  );
+}
