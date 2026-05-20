@@ -208,137 +208,147 @@ export default function ImportProductsPage() {
       }
     };
 
-  const downloadSingleTemplate =
-    () => {
-      const data = [
-        {
-          name:
-            "Loyang Pai Bali",
+    const downloadTemplate = () => {
+  const data = [
+    // PRODUK SINGLE
+    {
+      name: "Loyang Pai Bali",
 
-          type: "single",
+      type: "single",
 
-          category:
-            "Loyang",
+      category: "Loyang",
 
-          description:
-            "Loyang premium anti lengket",
+      description:
+        "Loyang premium anti lengket",
 
-          image1:
-            "https://yourdomain.com/produk1.jpg",
+      image1:
+        "https://yourdomain.com/produk1.jpg",
 
-          image2:
-            "https://yourdomain.com/produk2.jpg",
+      image2:
+        "https://yourdomain.com/produk2.jpg",
 
-          image3:
-            "https://yourdomain.com/produk3.jpg",
+      image3:
+        "https://yourdomain.com/produk3.jpg",
 
-          image4:
-            "https://yourdomain.com/produk4.jpg",
+      image4:
+        "https://yourdomain.com/produk4.jpg",
 
-          variantName: "",
+      variantName: "",
 
-          variantValue: "",
+      variantValue: "",
 
-          price: 85000,
+      price: 85000,
 
-          stock: 10,
+      stock: 10,
 
-          weight: 500,
+      weight: 500,
 
-          packageLength: 20,
+      packageLength: 20,
 
-          packageWidth: 20,
+      packageWidth: 20,
 
-          packageHeight: 10,
-        },
-      ];
+      packageHeight: 10,
+    },
 
-      const worksheet =
-        XLSX.utils.json_to_sheet(
-          data
-        );
+    // PRODUK VARIANT
+    {
+      name: "Hijab Paris",
 
-      const workbook =
-        XLSX.utils.book_new();
+      type: "variant",
 
-      XLSX.utils.book_append_sheet(
-        workbook,
-        worksheet,
-        "Single Product"
-      );
+      category: "Hijab",
 
-      XLSX.writeFile(
-        workbook,
-        "template-produk-single.xlsx"
-      );
-    };
+      description:
+        "Hijab premium adem",
 
-  const downloadVariantTemplate =
-    () => {
-      const data = [
-        {
-          name:
-            "Hijab Paris",
+      image1:
+        "https://yourdomain.com/hijab1.jpg",
 
-          type: "variant",
+      image2:
+        "https://yourdomain.com/hijab2.jpg",
 
-          category:
-            "Hijab",
+      image3:
+        "https://yourdomain.com/hijab3.jpg",
 
-          description:
-            "Hijab premium adem",
+      image4:
+        "https://yourdomain.com/hijab4.jpg",
 
-          image1:
-            "https://yourdomain.com/hijab1.jpg",
+      variantName: "Warna",
 
-          image2:
-            "https://yourdomain.com/hijab2.jpg",
+      variantValue: "Cream",
 
-          image3:
-            "https://yourdomain.com/hijab3.jpg",
+      price: 75000,
 
-          image4:
-            "https://yourdomain.com/hijab4.jpg",
+      stock: 8,
 
-          variantName:
-            "Warna",
+      weight: 300,
 
-          variantValue:
-            "Cream",
+      packageLength: 15,
 
-          price: 75000,
+      packageWidth: 15,
 
-          stock: 8,
+      packageHeight: 3,
+    },
 
-          weight: 300,
+    {
+      name: "Hijab Paris",
 
-          packageLength: 15,
+      type: "variant",
 
-          packageWidth: 15,
+      category: "Hijab",
 
-          packageHeight: 3,
-        },
-      ];
+      description:
+        "Hijab premium adem",
 
-      const worksheet =
-        XLSX.utils.json_to_sheet(
-          data
-        );
+      image1:
+        "https://yourdomain.com/hijab1.jpg",
 
-      const workbook =
-        XLSX.utils.book_new();
+      image2:
+        "https://yourdomain.com/hijab2.jpg",
 
-      XLSX.utils.book_append_sheet(
-        workbook,
-        worksheet,
-        "Variant Product"
-      );
+      image3:
+        "https://yourdomain.com/hijab3.jpg",
 
-      XLSX.writeFile(
-        workbook,
-        "template-produk-variant.xlsx"
-      );
-    };
+      image4:
+        "https://yourdomain.com/hijab4.jpg",
+
+      variantName: "Warna",
+
+      variantValue: "Hitam",
+
+      price: 75000,
+
+      stock: 5,
+
+      weight: 300,
+
+      packageLength: 15,
+
+      packageWidth: 15,
+
+      packageHeight: 3,
+    },
+  ];
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(
+      data
+    );
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Products"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "template-import-produk.xlsx"
+  );
+};
 
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">
@@ -349,26 +359,15 @@ export default function ImportProductsPage() {
           </h1>
 
           <div className="flex flex-wrap gap-4 mb-6">
-            <button
-              onClick={
-                downloadSingleTemplate
-              }
-              className="bg-blue-600 text-white px-5 py-3 rounded-2xl"
-            >
-              Download Template
-              Produk Satuan
-            </button>
 
-            <button
-              onClick={
-                downloadVariantTemplate
-              }
-              className="bg-purple-600 text-white px-5 py-3 rounded-2xl"
-            >
-              Download Template
-              Produk Varian
-            </button>
-          </div>
+  <button
+    onClick={downloadTemplate}
+    className="bg-black text-white px-5 py-3 rounded-2xl"
+  >
+    Download Template Excel
+  </button>
+
+</div>
 
           <input
             type="file"
