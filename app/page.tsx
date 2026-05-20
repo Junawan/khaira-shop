@@ -46,6 +46,18 @@ export default function Home() {
   const [loading, setLoading] =
     useState(true);
 
+    const [search, setSearch] =
+  useState("");
+
+  const filteredProducts =
+  products.filter((product) =>
+    product.name
+      .toLowerCase()
+      .includes(
+        search.toLowerCase()
+      )
+  );
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -79,6 +91,42 @@ export default function Home() {
     <main className="min-h-screen bg-[#faf7f2]">
 
       <Navbar />
+
+      {/* SEARCH STICKY */}
+
+<div className="sticky top-[72px] z-40 bg-[#faf7f2]/95 backdrop-blur-md border-b border-gray-200">
+
+  <div className="max-w-7xl mx-auto px-6 py-4">
+
+    <div className="relative">
+
+      <input
+        type="text"
+        placeholder="Cari produk..."
+        value={search}
+        onChange={(e) =>
+          setSearch(e.target.value)
+        }
+        className="
+          w-full
+          bg-white
+          border
+          border-gray-300
+          rounded-2xl
+          px-5
+          py-4
+          text-sm
+          outline-none
+          focus:border-black
+          shadow-sm
+        "
+      />
+
+    </div>
+
+  </div>
+
+</div>
 
       {/* PROMO BANNER */}
 
@@ -237,14 +285,14 @@ export default function Home() {
             <div className="text-center py-20 text-gray-500">
               Memuat produk...
             </div>
-          ) : products.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <div className="bg-white rounded-3xl p-10 text-center text-gray-500 shadow-sm">
-              Belum ada produk
+              Produk tidak ditemukan
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
 
-              {products.map((product) => {
+              {filteredProducts.map((product) => {
 
                 const finalPrice =
   product.variants &&
