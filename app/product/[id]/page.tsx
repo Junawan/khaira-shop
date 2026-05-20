@@ -18,6 +18,10 @@ import {
 
 import { useCartStore } from "@/store/cart";
 
+import {
+  MessageCircle,
+} from "lucide-react";
+
 type VariantValue = {
   value: string;
 
@@ -233,6 +237,32 @@ images: data.images || [],
   router.push("/checkout");
 };
 
+const handleWhatsApp = () => {
+  const productName =
+    product.name;
+
+  const variant =
+    selectedVariant?.value
+      ? `\nVarian: ${selectedVariant.value}`
+      : "";
+
+  const qty =
+    `\nJumlah: ${quantity}`;
+
+  const message =
+    `Halo admin, saya ingin bertanya mengenai produk:\n\n${productName}${variant}${qty}`;
+
+  const url =
+    `https://wa.me/6285710255464?text=${encodeURIComponent(
+      message
+    )}`;
+
+  window.open(
+    url,
+    "_blank"
+  );
+};
+
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">
 
@@ -444,7 +474,7 @@ product.images.filter(Boolean).length > 0 && (
 
           {/* BUTTON */}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
 
             <button
               onClick={() => handleAddToCart()}
@@ -459,6 +489,17 @@ product.images.filter(Boolean).length > 0 && (
             >
               Checkout Langsung
             </button>
+
+            <button
+  onClick={handleWhatsApp}
+  className="bg-green-500 text-white py-4 rounded-2xl font-semibold hover:bg-green-600 transition flex items-center justify-center gap-2"
+>
+
+  <MessageCircle size={22} />
+
+  Chat Admin
+
+</button>
 
           </div>
 
