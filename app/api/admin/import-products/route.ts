@@ -31,126 +31,156 @@ export async function POST(req: Request) {
       {};
 
     for (const item of products) {
-      // ambil nama dengan aman
-      const productName =
-        item.name ||
-        item.Nama ||
-        item.nama ||
-        "";
+  // FLEXIBLE HEADER
+  const productName =
+    item.name ||
+    item.Name ||
+    item.nama ||
+    item.Nama ||
+    "";
 
-      // skip jika nama kosong
-      if (!productName) continue;
+  if (!productName) continue;
 
-      const key = productName.trim();
+  const productType = (
+    item.type ||
+    item.Type ||
+    "single"
+  )
+    .toString()
+    .toLowerCase();
 
-      // buat produk pertama
-      if (!groupedProducts[key]) {
-        groupedProducts[key] = {
-          name: key,
+  const key = productName.trim();
 
-          slug: slugify(key),
+  // CREATE PRODUCT
+  if (!groupedProducts[key]) {
+    groupedProducts[key] = {
+      name: key,
 
-          type:
-            item.type ||
-            item.Type ||
-            "single",
+      slug: slugify(key),
 
-          category:
-            item.category ||
-            item.Category ||
-            "",
+      type: productType,
 
-          description:
-            item.description ||
-            item.Description ||
-            "",
+      category:
+        item.category ||
+        item.Category ||
+        "",
 
-          image:
-            item.image1 || "",
+      description:
+        item.description ||
+        item.Description ||
+        "",
 
-          images: [
-            item.image1,
-            item.image2,
-            item.image3,
-            item.image4,
-          ].filter(Boolean),
+      image:
+        item.image1 ||
+        item.Image1 ||
+        "",
 
-          price:
-            Number(item.price) || 0,
+      images: [
+        item.image1 ||
+          item.Image1,
 
-          stock:
-            Number(item.stock) || 0,
+        item.image2 ||
+          item.Image2,
 
-          weight:
-            Number(item.weight) || 0,
+        item.image3 ||
+          item.Image3,
 
-          length:
-            Number(
-              item.packageLength
-            ) || 0,
+        item.image4 ||
+          item.Image4,
+      ].filter(Boolean),
 
-          width:
-            Number(
-              item.packageWidth
-            ) || 0,
+      // SINGLE PRODUCT PRICE
+      price:
+        productType === "single"
+          ? Number(item.price || item.Price) ||
+            0
+          : 0,
 
-          height:
-            Number(
-              item.packageHeight
-            ) || 0,
+      stock:
+        Number(item.stock || item.Stock) ||
+        0,
 
-          variants: [],
-        };
-      }
+      weight:
+        Number(
+          item.weight ||
+            item.Weight
+        ) || 0,
 
-      // VARIANT
-      if (
-        (item.type || "").toLowerCase() ===
-        "variant"
-      ) {
-        const variantName =
-          item.variantName || "Varian";
+      length:
+        Number(
+          item.packageLength ||
+            item.PackageLength
+        ) || 0,
 
-        const existingVariant =
-          groupedProducts[
-            key
-          ].variants.find(
-            (v: any) =>
-              v.name === variantName
-          );
+      width:
+        Number(
+          item.packageWidth ||
+            item.PackageWidth
+        ) || 0,
 
-        // jika belum ada group variant
-        if (!existingVariant) {
-          groupedProducts[
-            key
-          ].variants.push({
-            name: variantName,
+      height:
+        Number(
+          item.packageHeight ||
+            item.PackageHeight
+        ) || 0,
 
-            values: [],
-          });
-        }
+      variants: [],
+    };
+  }
 
-        // cari lagi setelah dibuat
-        const variantGroup =
-          groupedProducts[
-            key
-          ].variants.find(
-            (v: any) =>
-              v.name === variantName
-          );
+  // VARIANT PRODUCT
+  if (productType === "variant") {
+    const variantName =
+      item.variantName ||
+      item.VariantName ||
+      "Varian";
 
-        variantGroup.values.push({
-          value:
-            item.variantValue || "",
+    const variantValue =
+      item.variantValue ||
+      item.VariantValue ||
+      "";
 
-          price:
-            Number(item.price) || 0,
+    // cek group variant
+    let existingVariant =
+      groupedProducts[
+        key
+      ].variants.find(
+        (v: any) =>
+          v.name === variantName
+      );
 
-          stock:
-            Number(item.stock) || 0,
-        });
-      }
+    // buat group jika belum ada
+    if (!existingVariant) {
+      existingVariant = {
+        name: variantName,
+        values: [],
+      };
+
+      groupedProducts[
+        key
+      ].variants.push(
+        existingVariant
+      );
     }
+
+    // push value
+    existingVariant.values.push({
+      value: variantValue,
+
+      price:
+        Number(
+          item.price ||
+            item.Price
+        ) || 0,
+
+      stock:
+        Number(
+          item.stock ||
+            item.Stock
+        ) || 0,
+    });
+  }
+}
 
     const finalProducts =
       Object.values(groupedProducts);
