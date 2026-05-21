@@ -91,10 +91,14 @@ export async function POST(req: Request) {
 
       // SINGLE PRODUCT PRICE
       price:
-        productType === "single"
-          ? Number(item.price || item.Price) ||
-            0
-          : 0,
+  productType === "single"
+    ? Math.round(
+        Number(
+          item.price ||
+          item.Price
+        ) || 0
+      )
+    : 0,
 
       stock:
         Number(item.stock || item.Stock) ||
@@ -168,10 +172,12 @@ export async function POST(req: Request) {
       value: variantValue,
 
       price:
-        Number(
-          item.price ||
-            item.Price
-        ) || 0,
+  Math.round(
+    Number(
+      item.price ||
+        item.Price
+    ) || 0
+  ),
 
       stock:
         Number(
