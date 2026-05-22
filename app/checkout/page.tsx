@@ -208,8 +208,45 @@ export default function CheckoutPage() {
           return;
         }
 
-        window.location.href =
-  data.redirect_url;
+        window.snap.pay(
+          data.token,
+          {
+            onSuccess:
+              function () {
+                clearCart();
+
+                alert(
+                  "Pembayaran berhasil"
+                );
+
+                window.location.href =
+  `/payment-success?order_id=${data.orderId}`;
+              },
+
+            onPending:
+              function () {
+                alert(
+                  "Menunggu pembayaran"
+                );
+              },
+
+            onError:
+              function (error: any) {
+                console.log(error);
+
+                alert(
+                  "Pembayaran gagal"
+                );
+              },
+
+            onClose:
+              function () {
+                console.log(
+                  "Popup ditutup"
+                );
+              },
+          }
+        );
       } catch (error) {
         console.log(error);
 

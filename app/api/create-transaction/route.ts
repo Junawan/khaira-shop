@@ -1,12 +1,23 @@
 import { NextResponse } from "next/server";
-
 import { adminDb } from "@/lib/firebase-admin";
 
-import axios from "axios";
-
-import CryptoJS from "crypto-js";
+const midtransClient = require("midtrans-client");
 
 export const runtime = "nodejs";
+
+// =========================
+// MIDTRANS
+// =========================
+
+const snap = new midtransClient.Snap({
+  isProduction: true,
+
+  serverKey: process.env.MIDTRANS_SERVER_KEY,
+});
+
+// =========================
+// CREATE TRANSACTION
+// =========================
 
 export async function POST(req: Request) {
   try {
@@ -26,235 +37,155 @@ export async function POST(req: Request) {
 
     const subtotal = body.items.reduce(
       (acc: number, item: any) =>
-        acc +
-        Number(item.price) *
-          Number(item.quantity),
+        acc + Number(item.price) * Number(item.quantity),
       0
     );
 
-    const shippingCost = Number(
-      body.shippingCost || 0
-    );
+    const shippingCost = Number(body.shippingCost || 0);
 
-    const total =
-      subtotal + shippingCost;
+    const total = subtotal + shippingCost;
 
     // =========================
-    // SAVE FIRESTORE
+    // ITEM DETAILS
     // =========================
 
-    const orderRef =
-      await adminDb
-        .collection("orders")
-        .add({
-          orderId,
+    const itemDetails = body.items.map((item: any) => ({
+      id: item.id || "product",
 
-          customerName:
-            body.name || "",
+      price: Math.round(item.price),
 
-          email:
-            body.email || "",
+      quantity: Number(item.quantity || 1),
 
-          phone:
-            body.phone || "",
+      name:
+  item.name.length > 50
+    ? item.name.substring(0, 50)
+    : item.name,
+    }));
 
-          address:
-            body.address || "",
-
-          postalCode:
-            body.postalCode || "",
-
-          note:
-            body.note || "",
-
-          items:
-            body.items || [],
-
-          subtotal,
-
-          shippingCost,
-
-          total,
-
-          courier:
-            body.courier || "",
-
-          courierService:
-            body.courierService ||
-            "",
-
-          paymentStatus:
-            "pending",
-
-          orderStatus:
-            "pending",
-
-          createdAt:
-            new Date(),
-
-          updatedAt:
-            new Date(),
-        });
-
-    // =========================
-    // IPAYMU
-    // =========================
-
-    const va =
-      process.env.IPAYMU_VA || "";
-
-    const apiKey =
-      process.env.IPAYMU_API_KEY ||
-      "";
-
-    const method = "POST";
-
-    const url =
-      "https://my.ipaymu.com/api/v2/payment";
-
-    // =========================
-    // PRODUCT DATA
-    // =========================
-
-    const product = body.items.map(
-      (item: any) => item.name
-    );
-
-    const qty = body.items.map(
-      (item: any) =>
-        Number(item.quantity)
-    );
-
-    const price = body.items.map(
-      (item: any) =>
-        Math.round(item.price)
-    );
-
-    // ongkir
+    // ONGKIR
     if (shippingCost > 0) {
-      product.push(
-        "Ongkos Kirim"
-      );
+      itemDetails.push({
+        id: "shipping",
 
-      qty.push(1);
+        price: shippingCost,
 
-      price.push(
-        Math.round(
-          shippingCost
-        )
-      );
+        quantity: 1,
+
+        name: "Ongkos Kirim",
+      });
     }
 
     // =========================
-    // BODY
+    // SAVE TO FIRESTORE
+    // =========================
+    // save
+
+    const orderRef = await adminDb.collection("orders").add({
+      orderId,
+
+      midtransOrderId: orderId,
+
+      customerName: body.name || "",
+
+      email: body.email || "",
+
+      phone: body.phone || "",
+
+      address: body.address || "",
+
+      postalCode: body.postalCode || "",
+
+      note: body.note || "",
+
+      items: body.items || [],
+
+      subtotal,
+
+      shippingCost,
+
+      total,
+
+      courier: body.courier || "",
+
+      courierService: body.courierService || "",
+
+      paymentStatus: "pending",
+
+      orderStatus: "pending",
+
+      airwayBillId: "",
+
+      trackingId: "",
+
+      trackingLink: "",
+
+      shippingType: "",
+
+      createdAt: new Date(),
+
+      updatedAt: new Date(),
+    });
+
+    console.log("FIRESTORE ORDER ID:", orderRef.id);
+
+    // =========================
+    // MIDTRANS PARAMETER
     // =========================
 
-    const bodyData = {
-      product,
+    const parameter = {
+      transaction_details: {
+        order_id: orderId,
 
-      qty,
+        gross_amount: Math.round(total),
+      },
 
-      price,
+      customer_details: {
+        first_name: body.name,
 
-      returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+        email: body.email,
 
-      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
+        phone: body.phone,
+      },
 
-      notifyUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/ipaymu-callback`,
-
-      referenceId: orderId,
-
-      buyerName: body.name,
-
-      buyerPhone: body.phone,
-
-      buyerEmail: body.email,
+      item_details: itemDetails,
     };
 
-    // =========================
-    // SIGNATURE
-    // =========================
-
-    const bodyEncrypt =
-      JSON.stringify(bodyData);
-
-    const signatureString = CryptoJS.enc.Hex.stringify(
-      CryptoJS.SHA256(
-        bodyEncrypt
-      )
-    );
-
-    const signature = CryptoJS.enc.Hex.stringify(
-      CryptoJS.HmacSHA256(
-        `${method}:${va}:${signatureString}:${apiKey}`,
-        apiKey
-      )
-    );
+    console.log("MIDTRANS PARAMETER:", parameter);
 
     // =========================
-    // REQUEST
+    // CREATE TRANSACTION
     // =========================
 
-    const response =
-      await axios.post(
-        url,
-        bodyData,
-        {
-          headers: {
-            Accept:
-              "application/json",
+    const transaction = await snap.createTransaction(parameter);
 
-            "Content-Type":
-              "application/json",
-
-            va,
-
-            signature,
-
-            timestamp:
-              new Date().toISOString(),
-          },
-        }
-      );
-
-    console.log(
-      "IPAYMU RESPONSE:",
-      response.data
-    );
-
-    // =========================
-    // RETURN
-    // =========================
+    console.log("MIDTRANS RESPONSE:", transaction);
 
     return NextResponse.json({
       success: true,
 
-      redirect_url:
-        response.data.Data.Url,
+      token: transaction.token,
+
+      redirect_url: transaction.redirect_url,
 
       orderId,
 
-      firestoreDocId:
-        orderRef.id,
+      firestoreDocId: orderRef.id,
     });
   } catch (error: any) {
-    console.log(
-      "IPAYMU ERROR:",
-      error?.response?.data ||
-        error
-    );
+    console.log("MIDTRANS ERROR:", error);
 
     return NextResponse.json(
-      {
-        success: false,
+  {
+    success: false,
 
-        message:
-          error?.response?.data ||
-          "iPaymu error",
-      },
-      {
-        status: 500,
-      }
-    );
+    message:
+      error instanceof Error
+        ? error.message
+        : "Midtrans error",
+  },
+  {
+    status: 500,
+  }
+);
   }
 }
