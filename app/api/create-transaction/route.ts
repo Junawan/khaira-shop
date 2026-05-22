@@ -1,191 +1,233 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
-
-const midtransClient = require("midtrans-client");
+import axios from "axios";
+import crypto from "crypto";
 
 export const runtime = "nodejs";
-
-// =========================
-// MIDTRANS
-// =========================
-
-const snap = new midtransClient.Snap({
-  isProduction: true,
-
-  serverKey: process.env.MIDTRANS_SERVER_KEY,
-});
-
-// =========================
-// CREATE TRANSACTION
-// =========================
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    console.log("CHECKOUT BODY:", body);
+    const merchantCode =
+      process.env.TRIPAY_MERCHANT_CODE!;
 
-    // =========================
-    // ORDER ID
-    // =========================
+    const apiKey =
+      process.env.TRIPAY_API_KEY!;
+
+    const privateKey =
+      process.env.TRIPAY_PRIVATE_KEY!;
+
+    const isProduction =
+      process.env.TRIPAY_IS_PRODUCTION ===
+      "true";
+
+    const baseUrl = isProduction
+      ? "https://tripay.co.id/api"
+      : "https://tripay.co.id/api-sandbox";
+
+    // =====================
+    // ORDER
+    // =====================
 
     const orderId = `ORDER-${Date.now()}`;
 
-    // =========================
-    // TOTAL
-    // =========================
-
     const subtotal = body.items.reduce(
       (acc: number, item: any) =>
-        acc + Number(item.price) * Number(item.quantity),
+        acc +
+        Number(item.price) *
+          Number(item.quantity),
       0
     );
 
-    const shippingCost = Number(body.shippingCost || 0);
+    const shippingCost = Number(
+      body.shippingCost || 0
+    );
 
-    const total = subtotal + shippingCost;
+    const total =
+      subtotal + shippingCost;
 
-    // =========================
-    // ITEM DETAILS
-    // =========================
+    // =====================
+    // SAVE FIRESTORE
+    // =====================
 
-    const itemDetails = body.items.map((item: any) => ({
-      id: item.id || "product",
+    const orderRef =
+      await adminDb
+        .collection("orders")
+        .add({
+          orderId,
 
-      price: Math.round(item.price),
+          customerName:
+            body.name || "",
 
-      quantity: Number(item.quantity || 1),
+          email:
+            body.email || "",
 
-      name:
-  item.name.length > 50
-    ? item.name.substring(0, 50)
-    : item.name,
-    }));
+          phone:
+            body.phone || "",
 
-    // ONGKIR
-    if (shippingCost > 0) {
-      itemDetails.push({
-        id: "shipping",
+          address:
+            body.address || "",
 
-        price: shippingCost,
+          postalCode:
+            body.postalCode || "",
 
-        quantity: 1,
+          note:
+            body.note || "",
 
-        name: "Ongkos Kirim",
-      });
-    }
+          items:
+            body.items || [],
 
-    // =========================
-    // SAVE TO FIRESTORE
-    // =========================
-    // save
+          subtotal,
 
-    const orderRef = await adminDb.collection("orders").add({
-      orderId,
+          shippingCost,
 
-      midtransOrderId: orderId,
+          total,
 
-      customerName: body.name || "",
+          courier:
+            body.courier || "",
 
-      email: body.email || "",
+          courierService:
+            body.courierService || "",
 
-      phone: body.phone || "",
+          paymentStatus:
+            "pending",
 
-      address: body.address || "",
+          orderStatus:
+            "pending",
 
-      postalCode: body.postalCode || "",
+          createdAt:
+            new Date(),
 
-      note: body.note || "",
+          updatedAt:
+            new Date(),
+        });
 
-      items: body.items || [],
+    // =====================
+    // SIGNATURE
+    // =====================
 
-      subtotal,
+    const signature = crypto
+      .createHmac(
+        "sha256",
+        privateKey
+      )
+      .update(
+        merchantCode +
+          orderId +
+          total
+      )
+      .digest("hex");
 
-      shippingCost,
+    // =====================
+    // REQUEST
+    // =====================
 
-      total,
+    const payload = {
+      method: "QRIS",
 
-      courier: body.courier || "",
+      merchant_ref: orderId,
 
-      courierService: body.courierService || "",
+      amount: total,
 
-      paymentStatus: "pending",
+      customer_name: body.name,
 
-      orderStatus: "pending",
+      customer_email:
+        body.email,
 
-      airwayBillId: "",
+      customer_phone:
+        body.phone,
 
-      trackingId: "",
+      order_items: [
+        ...body.items.map(
+          (item: any) => ({
+            sku:
+              item.id ||
+              "product",
 
-      trackingLink: "",
+            name: item.name,
 
-      shippingType: "",
+            price: Number(
+              item.price
+            ),
 
-      createdAt: new Date(),
+            quantity: Number(
+              item.quantity
+            ),
+          })
+        ),
 
-      updatedAt: new Date(),
-    });
+        {
+          sku: "shipping",
 
-    console.log("FIRESTORE ORDER ID:", orderRef.id);
+          name:
+            "Ongkos Kirim",
 
-    // =========================
-    // MIDTRANS PARAMETER
-    // =========================
+          price:
+            shippingCost,
 
-    const parameter = {
-      transaction_details: {
-        order_id: orderId,
+          quantity: 1,
+        },
+      ],
 
-        gross_amount: Math.round(total),
-      },
+      return_url:
+        "https://ks25.my.id/payment-success",
 
-      customer_details: {
-        first_name: body.name,
+      expired_time:
+        Math.floor(
+          Date.now() / 1000
+        ) +
+        24 * 60 * 60,
 
-        email: body.email,
-
-        phone: body.phone,
-      },
-
-      item_details: itemDetails,
+      signature,
     };
 
-    console.log("MIDTRANS PARAMETER:", parameter);
-
-    // =========================
-    // CREATE TRANSACTION
-    // =========================
-
-    const transaction = await snap.createTransaction(parameter);
-
-    console.log("MIDTRANS RESPONSE:", transaction);
+    const response =
+      await axios.post(
+        `${baseUrl}/transaction/create`,
+        payload,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${apiKey}`,
+          },
+        }
+      );
 
     return NextResponse.json({
       success: true,
 
-      token: transaction.token,
+      paymentUrl:
+        response.data.data
+          .checkout_url,
 
-      redirect_url: transaction.redirect_url,
+      reference:
+        response.data.data
+          .reference,
 
       orderId,
 
-      firestoreDocId: orderRef.id,
+      firestoreDocId:
+        orderRef.id,
     });
   } catch (error: any) {
-    console.log("MIDTRANS ERROR:", error);
+    console.log(
+      "TRIPAY ERROR:",
+      error.response?.data ||
+        error.message
+    );
 
     return NextResponse.json(
-  {
-    success: false,
+      {
+        success: false,
 
-    message:
-      error instanceof Error
-        ? error.message
-        : "Midtrans error",
-  },
-  {
-    status: 500,
-  }
-);
+        message:
+          error.response?.data ||
+          error.message,
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }

@@ -6,11 +6,6 @@ import Script from "next/script";
 
 import { useCartStore } from "@/store/cart";
 
-declare global {
-  interface Window {
-    snap: any;
-  }
-}
 
 export default function CheckoutPage() {
   const cart = useCartStore(
@@ -133,143 +128,83 @@ export default function CheckoutPage() {
       }
     };
 
-  const handleCheckout =
-    async () => {
-      if (
-        !name ||
-        !email ||
-        !phone ||
-        !address ||
-        !postalCode
-      ) {
-        alert(
-          "Lengkapi data checkout"
-        );
-        return;
+  const handleCheckout = async () => {
+  if (
+    !name ||
+    !email ||
+    !phone ||
+    !address ||
+    !postalCode
+  ) {
+    alert("Lengkapi data checkout");
+    return;
+  }
+
+  if (!selectedShipping) {
+    alert("Pilih pengiriman");
+    return;
+  }
+
+  try {
+    setLoadingCheckout(true);
+
+    const response = await fetch(
+      "/api/create-transaction",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          address,
+          postalCode,
+          note,
+          items: cart,
+          shippingCost:
+            selectedShipping.price,
+          courier:
+            selectedShipping.courier_name,
+          courierService:
+            selectedShipping.courier_service_name,
+          total: totalPrice,
+        }),
       }
+    );
 
-      if (!selectedShipping) {
-        alert(
-          "Pilih pengiriman"
-        );
-        return;
-      }
+    const data = await response.json();
 
-      if (!window.snap) {
-        alert(
-          "Midtrans belum siap"
-        );
-        return;
-      }
+    console.log("TRIPAY RESPONSE:", data);
 
-      try {
-        setLoadingCheckout(true);
+    // ERROR
+    if (!data.success) {
+      alert(
+        data.message ||
+          "Gagal membuat pembayaran"
+      );
 
-        const response =
-          await fetch(
-            "/api/create-transaction",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-              body: JSON.stringify({
-                name,
-                email,
-                phone,
-                address,
-                postalCode,
-                note,
-                items: cart,
-                shippingCost:
-                  selectedShipping.price,
-                courier:
-                  selectedShipping.courier_name,
-                courierService:
-                  selectedShipping.courier_service_name,
-                total:
-                  totalPrice,
-              }),
-            }
-          );
+      return;
+    }
 
-        const data =
-          await response.json();
+    // REDIRECT KE HALAMAN BAYAR
+    window.location.href =
+      data.paymentUrl;
 
-        console.log(data);
+  } catch (error) {
+    console.log(error);
 
-        if (!data.token) {
-          alert(
-            data.error ||
-              "Gagal membuat pembayaran"
-          );
-
-          return;
-        }
-
-        window.snap.pay(
-          data.token,
-          {
-            onSuccess:
-              function () {
-                clearCart();
-
-                alert(
-                  "Pembayaran berhasil"
-                );
-
-                window.location.href =
-  `/payment-success?order_id=${data.orderId}`;
-              },
-
-            onPending:
-              function () {
-                alert(
-                  "Menunggu pembayaran"
-                );
-              },
-
-            onError:
-              function (error: any) {
-                console.log(error);
-
-                alert(
-                  "Pembayaran gagal"
-                );
-              },
-
-            onClose:
-              function () {
-                console.log(
-                  "Popup ditutup"
-                );
-              },
-          }
-        );
-      } catch (error) {
-        console.log(error);
-
-        alert(
-          "Checkout gagal"
-        );
-      } finally {
-        setLoadingCheckout(false);
-      }
-    };
+    alert("Checkout gagal");
+  } finally {
+    setLoadingCheckout(false);
+  }
+};
 
   return (
     <>
       {/* MIDTRANS SNAP */}
-
-      <Script
-        src="https://app.midtrans.com/snap/snap.js"
-        data-client-key={
-          process.env
-            .NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
-        }
-        strategy="afterInteractive"
-      />
 
       <main className="min-h-screen bg-[#faf7f2] p-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
