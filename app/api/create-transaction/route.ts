@@ -133,6 +133,11 @@ export async function POST(req: Request) {
   }
 );
 
+console.log(
+  "LOUVIN FULL RESPONSE:",
+  JSON.stringify(response.data, null, 2)
+);
+
     console.log(
       "LOUVIN RESPONSE:",
       response.data
