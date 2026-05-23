@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import axios from "axios";
-import crypto from "crypto";
 
 export const runtime = "nodejs";
 
@@ -9,28 +8,13 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const merchantCode =
-      process.env.TRIPAY_MERCHANT_CODE!;
-
-    const apiKey =
-      process.env.TRIPAY_API_KEY!;
-
-    const privateKey =
-      process.env.TRIPAY_PRIVATE_KEY!;
-
-    const isProduction =
-      process.env.TRIPAY_IS_PRODUCTION ===
-      "true";
-
-    const baseUrl = isProduction
-      ? "https://tripay.co.id/api"
-      : "https://tripay.co.id/api-sandbox";
-
-    // =====================
-    // ORDER
-    // =====================
+    console.log("CHECKOUT BODY:", body);
 
     const orderId = `ORDER-${Date.now()}`;
+
+    // =========================
+    // TOTAL
+    // =========================
 
     const subtotal = body.items.reduce(
       (acc: number, item: any) =>
@@ -47,9 +31,9 @@ export async function POST(req: Request) {
     const total =
       subtotal + shippingCost;
 
-    // =====================
-    // SAVE FIRESTORE
-    // =====================
+    // =========================
+    // SAVE ORDER FIRESTORE
+    // =========================
 
     const orderRef =
       await adminDb
@@ -88,7 +72,8 @@ export async function POST(req: Request) {
             body.courier || "",
 
           courierService:
-            body.courierService || "",
+            body.courierService ||
+            "",
 
           paymentStatus:
             "pending",
@@ -96,114 +81,80 @@ export async function POST(req: Request) {
           orderStatus:
             "pending",
 
-          createdAt:
-            new Date(),
+          createdAt: new Date(),
 
-          updatedAt:
-            new Date(),
+          updatedAt: new Date(),
         });
 
-    // =====================
-    // SIGNATURE
-    // =====================
-
-    const signature = crypto
-      .createHmac(
-        "sha256",
-        privateKey
-      )
-      .update(
-        merchantCode +
-          orderId +
-          total
-      )
-      .digest("hex");
-
-    // =====================
-    // REQUEST
-    // =====================
-
-    const payload = {
-      method: "QRIS",
-
-      merchant_ref: orderId,
-
-      amount: total,
-
-      customer_name: body.name,
-
-      customer_email:
-        body.email,
-
-      customer_phone:
-        body.phone,
-
-      order_items: [
-        ...body.items.map(
-          (item: any) => ({
-            sku:
-              item.id ||
-              "product",
-
-            name: item.name,
-
-            price: Number(
-              item.price
-            ),
-
-            quantity: Number(
-              item.quantity
-            ),
-          })
-        ),
-
-        {
-          sku: "shipping",
-
-          name:
-            "Ongkos Kirim",
-
-          price:
-            shippingCost,
-
-          quantity: 1,
-        },
-      ],
-
-      return_url:
-        "https://ks25.my.id/payment-success",
-
-      expired_time:
-        Math.floor(
-          Date.now() / 1000
-        ) +
-        24 * 60 * 60,
-
-      signature,
-    };
+    // =========================
+    // CREATE LOUVIN QRIS
+    // =========================
 
     const response =
       await axios.post(
-        `${baseUrl}/transaction/create`,
-        payload,
+        "https://api.louvin.dev/create-transaction",
         {
-          headers: {
-            Authorization:
-              `Bearer ${apiKey}`,
-          },
+          api_key:
+            process.env
+              .LOUVIN_API_KEY,
+
+          slug:
+            process.env
+              .LOUVIN_SLUG,
+
+          amount: total,
+
+          external_id: orderId,
+
+          customer_name:
+            body.name,
+
+          customer_email:
+            body.email,
+
+          customer_phone:
+            body.phone,
+
+          description:
+            `Pembayaran Order ${orderId}`,
+
+          success_redirect_url:
+            "https://www.khairashop25.web.id/payment-success",
+
+          expired_time: 1800,
         }
       );
+
+    console.log(
+      "LOUVIN RESPONSE:",
+      response.data
+    );
+
+    if (!response.data?.success) {
+      return NextResponse.json(
+        {
+          success: false,
+
+          message:
+            "Gagal membuat QRIS",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
 
     return NextResponse.json({
       success: true,
 
       paymentUrl:
-        response.data.data
-          .checkout_url,
+        response.data.payment_url,
 
-      reference:
-        response.data.data
-          .reference,
+      qrString:
+        response.data.qr_string,
+
+      qrImage:
+        response.data.qr_image,
 
       orderId,
 
@@ -212,9 +163,9 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.log(
-      "TRIPAY ERROR:",
-      error.response?.data ||
-        error.message
+      "LOUVIN ERROR:",
+      error?.response?.data ||
+        error
     );
 
     return NextResponse.json(
@@ -222,8 +173,8 @@ export async function POST(req: Request) {
         success: false,
 
         message:
-          error.response?.data ||
-          error.message,
+          error?.response?.data ||
+          "Louvin Error",
       },
       {
         status: 500,
