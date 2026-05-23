@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+
 import { adminDb } from "@/lib/firebase-admin";
+
 import axios from "axios";
 
 export const runtime = "nodejs";
@@ -8,7 +10,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    console.log("CHECKOUT BODY:", body);
+    console.log(
+      "CHECKOUT BODY:",
+      body
+    );
 
     const orderId = `ORDER-${Date.now()}`;
 
@@ -17,10 +22,15 @@ export async function POST(req: Request) {
     // =========================
 
     const subtotal = body.items.reduce(
-      (acc: number, item: any) =>
+      (
+        acc: number,
+        item: any
+      ) =>
         acc +
         Number(item.price) *
-          Number(item.quantity),
+          Number(
+            item.quantity
+          ),
       0
     );
 
@@ -81,75 +91,188 @@ export async function POST(req: Request) {
           orderStatus:
             "pending",
 
-          createdAt: new Date(),
+          createdAt:
+            new Date(),
 
-          updatedAt: new Date(),
+          updatedAt:
+            new Date(),
         });
+
+    // =========================
+    // NOTIF ADMIN
+    // =========================
+
+    const itemsText =
+      body.items
+        .map(
+          (item: any) =>
+            `• ${item.name}
+Qty: ${
+              item.quantity
+            }
+Rp${(
+              item.price *
+              item.quantity
+            ).toLocaleString()}`
+        )
+        .join("\n\n");
+
+    const adminMessage = `🛒 ORDER BARU MASUK
+
+Order ID:
+${orderId}
+
+Nama:
+${body.name}
+
+WhatsApp:
+${body.phone}
+
+Alamat:
+${body.address}
+
+Produk:
+${itemsText}
+
+Subtotal:
+Rp${subtotal.toLocaleString()}
+
+Ongkir:
+Rp${shippingCost.toLocaleString()}
+
+Total:
+Rp${total.toLocaleString()}
+
+Kurir:
+${body.courier} - ${
+      body.courierService
+    }
+`;
+
+    // =========================
+    // SEND WA ADMIN
+    // =========================
+
+    try {
+      await fetch(
+        "https://api.fonnte.com/send",
+        {
+          method: "POST",
+
+          headers: {
+            Authorization:
+              process.env
+                .FONNTE_TOKEN ||
+              "",
+          },
+
+          body:
+            new URLSearchParams(
+              {
+                target:
+                  process.env
+                    .ADMIN_WHATSAPP ||
+                  "",
+
+                message:
+                  adminMessage,
+              }
+            ),
+        }
+      );
+    } catch (waError) {
+      console.log(
+        "FONNTE ERROR:",
+        waError
+      );
+    }
 
     // =========================
     // CREATE LOUVIN QRIS
     // =========================
 
-    const response = await axios.post(
-  "https://api.louvin.dev/create-transaction",
-  {
-    slug: "khairashop25",
+    const response =
+      await axios.post(
+        "https://api.louvin.dev/create-transaction",
+        {
+          slug:
+            "khairashop25",
 
-    payment_type: "qris",
+          payment_type:
+            "qris",
 
-    amount: total,
+          amount: total,
 
-    reference: orderId,
+          reference:
+            orderId,
 
-    customer_name: body.name,
+          customer_name:
+            body.name,
 
-    customer_email: body.email,
+          customer_email:
+            body.email,
 
-    customer_phone: body.phone,
+          customer_phone:
+            body.phone,
 
-    items: body.items.map(
-      (item: any) => ({
-        name: item.name,
+          items:
+            body.items.map(
+              (item: any) => ({
+                name:
+                  item.name,
 
-        price: item.price,
+                price:
+                  Number(
+                    item.price
+                  ),
 
-        quantity:
-          item.quantity,
-      })
-    ),
+                quantity:
+                  Number(
+                    item.quantity
+                  ),
+              })
+            ),
 
-    success_url:
-      "https://www.khairashop25.web.id/payment-success",
+          success_url:
+            "https://www.khairashop25.web.id/payment-success",
 
-    failed_url:
-      "https://www.khairashop25.web.id/payment-failed",
-  },
+          failed_url:
+            "https://www.khairashop25.web.id/payment-failed",
+        },
 
-  {
-    headers: {
-      "x-api-key":
-        process.env.LOUVIN_API_KEY!,
-    },
-  }
-);
-
-console.log(
-  "LOUVIN FULL RESPONSE:",
-  JSON.stringify(response.data, null, 2)
-);
+        {
+          headers: {
+            "x-api-key":
+              process.env
+                .LOUVIN_API_KEY!,
+          },
+        }
+      );
 
     console.log(
-      "LOUVIN RESPONSE:",
-      response.data
+      "LOUVIN FULL RESPONSE:",
+      JSON.stringify(
+        response.data,
+        null,
+        2
+      )
     );
 
-    if (!response.data?.success) {
+    // =========================
+    // VALIDASI QR STRING
+    // =========================
+
+    const qrString =
+      response.data?.payment
+        ?.qr_string;
+
+    if (!qrString) {
       return NextResponse.json(
         {
           success: false,
 
           message:
-            "Gagal membuat QRIS",
+            "QRIS tidak ditemukan",
         },
         {
           status: 500,
@@ -157,17 +280,37 @@ console.log(
       );
     }
 
+    // =========================
+    // UPDATE ORDER
+    // =========================
+
+    await adminDb
+      .collection("orders")
+      .doc(orderRef.id)
+      .update({
+        louvinResponse:
+          response.data,
+
+        qrString,
+
+        updatedAt:
+          new Date(),
+      });
+
+    // =========================
+    // SUCCESS
+    // =========================
+
     return NextResponse.json({
-  success: true,
+      success: true,
 
-  qrString:
-    response.data.payment.qr_string,
+      qrString,
 
-  orderId,
+      orderId,
 
-  firestoreDocId:
-    orderRef.id,
-});
+      firestoreDocId:
+        orderRef.id,
+    });
   } catch (error: any) {
     console.log(
       "LOUVIN ERROR:",
@@ -180,7 +323,9 @@ console.log(
         success: false,
 
         message:
-          error?.response?.data ||
+          error?.response?.data
+            ?.error ||
+          error?.message ||
           "Louvin Error",
       },
       {

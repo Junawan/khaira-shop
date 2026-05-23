@@ -49,6 +49,53 @@ Terima kasih sudah berbelanja 🙏
       }
     );
 
+    const adminMessage = `
+🛒 ORDER UPDATE
+
+Order ID:
+${body.orderId}
+
+Nama:
+${body.customerName}
+
+WhatsApp:
+${body.phone}
+
+Status:
+${body.status}
+
+Resi:
+${body.trackingNumber || "-"}
+
+Total:
+Rp${Number(
+  body.total || 0
+).toLocaleString()}
+
+Kurir:
+${body.courier || "-"}
+`;
+
+await fetch(
+  "https://api.fonnte.com/send",
+  {
+    method: "POST",
+
+    headers: {
+      Authorization:
+        process.env.FONNTE_TOKEN || "",
+    },
+
+    body: new URLSearchParams({
+      target:
+        process.env
+          .ADMIN_WHATSAPP || "",
+
+      message: adminMessage,
+    }),
+  }
+);
+
     // ======================
     // EMAIL
     // ======================
