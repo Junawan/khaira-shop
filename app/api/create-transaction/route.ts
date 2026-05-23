@@ -158,22 +158,16 @@ console.log(
     }
 
     return NextResponse.json({
-      success: true,
+  success: true,
 
-      paymentUrl:
-        response.data.payment_url,
+  qrString:
+    response.data.payment.qr_string,
 
-      qrString:
-        response.data.qr_string,
+  orderId,
 
-      qrImage:
-        response.data.qr_image,
-
-      orderId,
-
-      firestoreDocId:
-        orderRef.id,
-    });
+  firestoreDocId:
+    orderRef.id,
+});
   } catch (error: any) {
     console.log(
       "LOUVIN ERROR:",

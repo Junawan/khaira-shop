@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { useCartStore } from "@/store/cart";
 
+import QRCode from "qrcode";
+
 export default function CheckoutPage() {
   const cart = useCartStore(
     (state) => state.cart
@@ -48,6 +50,12 @@ export default function CheckoutPage() {
     useState<any[]>([]);
 
   const [selectedShipping, setSelectedShipping] =
+    useState<any>(null);
+
+  const [qrImage, setQrImage] =
+    useState("");
+
+  const [paymentData, setPaymentData] =
     useState<any>(null);
 
   const shippingCost =
@@ -240,24 +248,33 @@ export default function CheckoutPage() {
         }
 
         // =========================
-        // PAYMENT URL
+        // AMBIL QR STRING
         // =========================
 
-        if (!data.paymentUrl) {
-          console.log(
-            "PAYMENT URL TIDAK ADA"
-          );
+        const qrString =
+          data?.payment?.qr_string;
 
+        if (!qrString) {
           alert(
-            "Link pembayaran tidak ditemukan"
+            "QRIS tidak ditemukan"
           );
 
           return;
         }
 
-        console.log(
-          "REDIRECT TO:",
-          data.paymentUrl
+        // =========================
+        // GENERATE QR IMAGE
+        // =========================
+
+        const qr =
+          await QRCode.toDataURL(
+            qrString
+          );
+
+        setQrImage(qr);
+
+        setPaymentData(
+          data.payment
         );
 
         // =========================
@@ -265,13 +282,6 @@ export default function CheckoutPage() {
         // =========================
 
         clearCart();
-
-        // =========================
-        // REDIRECT
-        // =========================
-
-        window.location.href =
-          data.paymentUrl;
 
       } catch (error) {
         console.log(
@@ -289,6 +299,7 @@ export default function CheckoutPage() {
 
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">
+
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
 
         {/* FORM */}
@@ -457,7 +468,7 @@ export default function CheckoutPage() {
             >
               {loadingCheckout
                 ? "Memproses..."
-                : "Lanjut Pembayaran"}
+                : "Bayar dengan QRIS"}
             </button>
 
           </div>
@@ -534,6 +545,43 @@ export default function CheckoutPage() {
             </div>
 
           </div>
+
+          {/* QR PAYMENT */}
+
+          {qrImage && (
+            <div className="mt-8 border-t pt-8 text-center">
+
+              <h3 className="text-xl font-bold mb-4">
+                Scan QRIS untuk Pembayaran
+              </h3>
+
+              <img
+                src={qrImage}
+                alt="QRIS"
+                className="w-72 h-72 mx-auto"
+              />
+
+              <p className="mt-4 text-lg font-semibold">
+                Total Bayar
+              </p>
+
+              <p className="text-3xl font-bold text-green-600">
+                Rp
+                {paymentData?.total_payment?.toLocaleString()}
+              </p>
+
+              <p className="mt-4 text-sm text-gray-500">
+                Berlaku sampai:
+              </p>
+
+              <p className="font-semibold">
+                {
+                  paymentData?.expired_at
+                }
+              </p>
+
+            </div>
+          )}
 
         </div>
       </div>
