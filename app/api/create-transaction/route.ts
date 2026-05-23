@@ -90,46 +90,48 @@ export async function POST(req: Request) {
     // CREATE LOUVIN QRIS
     // =========================
 
-    const response =
-      await axios.post(
-        "https://api.louvin.dev/create-transaction",
-        {
-          api_key:
-            process.env
-              .LOUVIN_API_KEY,
+    const response = await axios.post(
+  "https://api.louvin.dev/create-transaction",
+  {
+    slug: "khairashop25",
 
-          slug:
-            process.env
-              .LOUVIN_SLUG,
+    payment_type: "qris",
 
-          amount: total,
+    amount: total,
 
-          external_id: orderId,
+    reference: orderId,
 
-          customer_name:
-            body.name,
+    customer_name: body.name,
 
-          customer_email:
-            body.email,
+    customer_email: body.email,
 
-          customer_phone:
-            body.phone,
+    customer_phone: body.phone,
 
-          description:
-            `Pembayaran Order ${orderId}`,
+    items: body.items.map(
+      (item: any) => ({
+        name: item.name,
 
-          success_redirect_url:
-            "https://www.khairashop25.web.id/payment-success",
+        price: item.price,
 
-          expired_time: 1800,
-        },
-        {
+        quantity:
+          item.quantity,
+      })
+    ),
+
+    success_url:
+      "https://www.khairashop25.web.id/payment-success",
+
+    failed_url:
+      "https://www.khairashop25.web.id/payment-failed",
+  },
+
+  {
     headers: {
       "x-api-key":
         process.env.LOUVIN_API_KEY!,
     },
   }
-      );
+);
 
     console.log(
       "LOUVIN RESPONSE:",
