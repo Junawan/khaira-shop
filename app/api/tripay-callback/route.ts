@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 
 import { adminDb } from "@/lib/firebase-admin";
 
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: "Tripay callback active",
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -14,7 +21,6 @@ export async function POST(req: Request) {
     const status =
       body.status;
 
-    // cari order berdasarkan reference
     const snapshot =
       await adminDb
         .collection("orders")
