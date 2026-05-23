@@ -384,6 +384,100 @@ export default function Home() {
 
       </section>
 
+      {/* FOOTER */}
+
+<footer className="bg-black text-white px-6 py-16">
+
+  <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
+
+    {/* BRAND */}
+    <div>
+
+      <h3 className="text-2xl font-bold mb-4">
+        KhairaShop25
+      </h3>
+
+      <p className="text-gray-300 leading-7">
+        Toko online perlengkapan baking,
+        loyang, dan kebutuhan dapur
+        berkualitas dengan harga lebih hemat.
+      </p>
+
+    </div>
+
+    {/* MENU */}
+    <div>
+
+      <h3 className="text-xl font-semibold mb-4">
+        Informasi
+      </h3>
+
+      <div className="flex flex-col gap-3">
+
+        <a
+          href="/tentang-kami"
+          className="text-gray-300 hover:text-white"
+        >
+          Tentang Kami
+        </a>
+
+        <a
+          href="/kebijakan-privasi"
+          className="text-gray-300 hover:text-white"
+        >
+          Kebijakan Privasi
+        </a>
+
+        <a
+          href="/syarat-ketentuan"
+          className="text-gray-300 hover:text-white"
+        >
+          Syarat & Ketentuan
+        </a>
+
+      </div>
+
+    </div>
+
+    {/* CONTACT */}
+    <div>
+
+      <h3 className="text-xl font-semibold mb-4">
+        Kontak
+      </h3>
+
+      <div className="space-y-3 text-gray-300">
+
+        <p>
+          WhatsApp:
+          085710255464
+        </p>
+
+        <p>
+          Email:
+          khairashop25@gmail.com
+        </p>
+
+        <p>
+          Website:
+          www.khairashop25.web.id
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div className="border-t border-white/10 mt-12 pt-6 text-center text-gray-400 text-sm">
+
+    © {new Date().getFullYear()} KhairaShop25.
+    All rights reserved.
+
+  </div>
+
+</footer>
+
     </main>
   );
   // redeploy trigger
