@@ -252,7 +252,7 @@ export default function CheckoutPage() {
         // =========================
 
         const qrString =
-          data?.payment?.qr_string;
+  data?.qrString;
 
         if (!qrString) {
           alert(
@@ -273,9 +273,9 @@ export default function CheckoutPage() {
 
         setQrImage(qr);
 
-        setPaymentData(
-          data.payment
-        );
+        setPaymentData({
+  total_payment: totalPrice,
+});
 
         // =========================
         // CLEAR CART
