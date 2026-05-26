@@ -1,10 +1,18 @@
 "use client";
 
+//app checkout
+
 import { useState } from "react";
+
+import Script from "next/script";
 
 import { useCartStore } from "@/store/cart";
 
-import QRCode from "qrcode";
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
 
 export default function CheckoutPage() {
   const cart = useCartStore(
@@ -52,21 +60,11 @@ export default function CheckoutPage() {
   const [selectedShipping, setSelectedShipping] =
     useState<any>(null);
 
-  const [qrImage, setQrImage] =
-    useState("");
-
-  const [paymentData, setPaymentData] =
-    useState<any>(null);
-
   const shippingCost =
     selectedShipping?.price || 0;
 
   const totalPrice =
     subtotal + shippingCost;
-
-  // =========================
-  // CHECK SHIPPING
-  // =========================
 
   const handleCheckShipping =
     async () => {
@@ -81,23 +79,15 @@ export default function CheckoutPage() {
         const items = cart.map(
           (item) => ({
             name: item.name,
-
             value: item.price,
-
-            quantity:
-              item.quantity,
-
+            quantity: item.quantity,
             weight:
-              (item.weight ||
-                1000) *
+              (item.weight || 1000) *
               item.quantity,
-
             length:
               item.length || 10,
-
             width:
               item.width || 10,
-
             height:
               item.height || 10,
           })
@@ -108,16 +98,13 @@ export default function CheckoutPage() {
             "/api/check-rates",
             {
               method: "POST",
-
               headers: {
                 "Content-Type":
                   "application/json",
               },
-
               body: JSON.stringify({
                 destination_postal_code:
                   postalCode,
-
                 items,
               }),
             }
@@ -126,26 +113,20 @@ export default function CheckoutPage() {
         const data =
           await response.json();
 
-        console.log(
-          "ONGKIR RESPONSE:",
-          data
-        );
-
         if (data.pricing) {
           setShippingOptions(
             data.pricing
           );
         } else {
           alert(
-            data.message ||
-              "Gagal mengambil ongkir"
+            "Gagal mengambil ongkir"
           );
         }
       } catch (error) {
         console.log(error);
 
         alert(
-          "Terjadi kesalahan saat cek ongkir"
+          "Terjadi kesalahan"
         );
       } finally {
         setLoadingShipping(
@@ -153,10 +134,6 @@ export default function CheckoutPage() {
         );
       }
     };
-
-  // =========================
-  // CHECKOUT
-  // =========================
 
   const handleCheckout =
     async () => {
@@ -170,7 +147,6 @@ export default function CheckoutPage() {
         alert(
           "Lengkapi data checkout"
         );
-
         return;
       }
 
@@ -178,7 +154,13 @@ export default function CheckoutPage() {
         alert(
           "Pilih pengiriman"
         );
+        return;
+      }
 
+      if (!window.snap) {
+        alert(
+          "Midtrans belum siap"
+        );
         return;
       }
 
@@ -190,36 +172,24 @@ export default function CheckoutPage() {
             "/api/create-transaction",
             {
               method: "POST",
-
               headers: {
                 "Content-Type":
                   "application/json",
               },
-
               body: JSON.stringify({
                 name,
-
                 email,
-
                 phone,
-
                 address,
-
                 postalCode,
-
                 note,
-
                 items: cart,
-
                 shippingCost:
                   selectedShipping.price,
-
                 courier:
                   selectedShipping.courier_name,
-
                 courierService:
                   selectedShipping.courier_service_name,
-
                 total:
                   totalPrice,
               }),
@@ -229,362 +199,324 @@ export default function CheckoutPage() {
         const data =
           await response.json();
 
-        console.log(
-          "PAYMENT RESPONSE:",
-          data
-        );
+        console.log(data);
 
-        // =========================
-        // ERROR
-        // =========================
-
-        if (!data.success) {
+        if (!data.token) {
           alert(
-            data.message ||
+            data.error ||
               "Gagal membuat pembayaran"
           );
 
           return;
         }
 
-        // =========================
-        // AMBIL QR STRING
-        // =========================
+        window.snap.pay(
+          data.token,
+          {
+            onSuccess:
+              function () {
+                clearCart();
 
-        const qrString =
-  data?.qrString;
+                alert(
+                  "Pembayaran berhasil"
+                );
 
-        if (!qrString) {
-          alert(
-            "QRIS tidak ditemukan"
-          );
+                window.location.href =
+  `/payment-success?order_id=${data.orderId}`;
+              },
 
-          return;
-        }
+            onPending:
+              function () {
+                alert(
+                  "Menunggu pembayaran"
+                );
+              },
 
-        // =========================
-        // GENERATE QR IMAGE
-        // =========================
+            onError:
+              function (error: any) {
+                console.log(error);
 
-        const qr =
-          await QRCode.toDataURL(
-            qrString
-          );
+                alert(
+                  "Pembayaran gagal"
+                );
+              },
 
-        setQrImage(qr);
-
-        setPaymentData({
-  total_payment: totalPrice,
-});
-
-        // =========================
-        // CLEAR CART
-        // =========================
-
-        clearCart();
-
+            onClose:
+              function () {
+                console.log(
+                  "Popup ditutup"
+                );
+              },
+          }
+        );
       } catch (error) {
-        console.log(
-          "CHECKOUT ERROR:",
-          error
-        );
+        console.log(error);
 
-        alert("Checkout gagal");
-      } finally {
-        setLoadingCheckout(
-          false
+        alert(
+          "Checkout gagal"
         );
+      } finally {
+        setLoadingCheckout(false);
       }
     };
 
   return (
-    <main className="min-h-screen bg-[#faf7f2] p-6">
+    <>
+      {/* MIDTRANS SNAP */}
 
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+      <Script
+        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key={
+          process.env
+            .NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
+        }
+        strategy="afterInteractive"
+      />
 
-        {/* FORM */}
+      <main className="min-h-screen bg-[#faf7f2] p-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
 
-        <div className="bg-white rounded-3xl p-8 shadow-sm">
+          {/* FORM */}
 
-          <h1 className="text-3xl font-bold mb-8">
-            Checkout
-          </h1>
+          <div className="bg-white rounded-3xl p-8 shadow-sm">
 
-          <div className="space-y-5">
+            <h1 className="text-3xl font-bold mb-8">
+              Checkout
+            </h1>
 
-            <input
-              type="text"
-              placeholder="Nama lengkap"
-              value={name}
-              onChange={(e) =>
-                setName(
-                  e.target.value
-                )
-              }
-              className="w-full border rounded-xl px-4 py-3"
-            />
+            <div className="space-y-5">
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) =>
-                setEmail(
-                  e.target.value
-                )
-              }
-              className="w-full border rounded-xl px-4 py-3"
-            />
-
-            <input
-              type="text"
-              placeholder="Nomor WhatsApp"
-              value={phone}
-              onChange={(e) =>
-                setPhone(
-                  e.target.value
-                )
-              }
-              className="w-full border rounded-xl px-4 py-3"
-            />
-
-            <textarea
-              placeholder="Alamat lengkap"
-              value={address}
-              onChange={(e) =>
-                setAddress(
-                  e.target.value
-                )
-              }
-              className="w-full border rounded-xl px-4 py-3 h-32"
-            />
-
-            <input
-              type="text"
-              placeholder="Kode Pos"
-              value={postalCode}
-              onChange={(e) =>
-                setPostalCode(
-                  e.target.value
-                )
-              }
-              className="w-full border rounded-xl px-4 py-3"
-            />
-
-            <textarea
-              placeholder="Catatan pesanan"
-              value={note}
-              onChange={(e) =>
-                setNote(
-                  e.target.value
-                )
-              }
-              className="w-full border rounded-xl px-4 py-3 h-24"
-            />
-
-            {/* BUTTON CEK ONGKIR */}
-
-            <button
-              onClick={
-                handleCheckShipping
-              }
-              className="w-full bg-black text-white py-4 rounded-2xl"
-            >
-              {loadingShipping
-                ? "Loading..."
-                : "Cek Ongkir"}
-            </button>
-
-            {/* SHIPPING OPTIONS */}
-
-            <div className="space-y-3">
-
-              {shippingOptions.map(
-                (
-                  option,
-                  index
-                ) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() =>
-                      setSelectedShipping(
-                        option
-                      )
-                    }
-                    className={`w-full border rounded-2xl p-4 text-left ${
-                      selectedShipping?.courier_name ===
-                        option.courier_name &&
-                      selectedShipping?.courier_service_name ===
-                        option.courier_service_name
-                        ? "border-green-600 bg-green-50"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    <div className="flex justify-between">
-
-                      <div>
-                        <p className="font-semibold">
-                          {
-                            option.courier_name
-                          }
-                        </p>
-
-                        <p className="text-sm text-gray-500">
-                          {
-                            option.courier_service_name
-                          }
-                        </p>
-
-                        <p className="text-sm text-gray-500">
-                          Estimasi{" "}
-                          {
-                            option.duration
-                          }
-                        </p>
-                      </div>
-
-                      <p className="font-bold">
-                        Rp
-                        {option.price.toLocaleString()}
-                      </p>
-
-                    </div>
-                  </button>
-                )
-              )}
-            </div>
-
-            {/* BUTTON CHECKOUT */}
-
-            <button
-              onClick={
-                handleCheckout
-              }
-              disabled={
-                loadingCheckout
-              }
-              className="w-full bg-green-600 text-white py-4 rounded-xl disabled:opacity-50"
-            >
-              {loadingCheckout
-                ? "Memproses..."
-                : "Bayar dengan QRIS"}
-            </button>
-
-          </div>
-        </div>
-
-        {/* SUMMARY */}
-
-        <div className="bg-white rounded-3xl p-8 shadow-sm h-fit">
-
-          <h2 className="text-2xl font-bold mb-6">
-            Ringkasan Pesanan
-          </h2>
-
-          <div className="space-y-4">
-
-            {cart.map((item) => (
-              <div
-                key={item.id}
-                className="flex justify-between"
-              >
-
-                <div>
-                  <p className="font-medium">
-                    {item.name}
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    {item.quantity}x
-                  </p>
-                </div>
-
-                <p>
-                  Rp
-                  {(
-                    item.price *
-                    item.quantity
-                  ).toLocaleString()}
-                </p>
-
-              </div>
-            ))}
-
-          </div>
-
-          <div className="border-t mt-6 pt-6 space-y-3">
-
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-
-              <span>
-                Rp
-                {subtotal.toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Ongkir</span>
-
-              <span>
-                Rp
-                {shippingCost.toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-2xl font-bold pt-4 border-t">
-
-              <span>Total</span>
-
-              <span>
-                Rp
-                {totalPrice.toLocaleString()}
-              </span>
-
-            </div>
-
-          </div>
-
-          {/* QR PAYMENT */}
-
-          {qrImage && (
-            <div className="mt-8 border-t pt-8 text-center">
-
-              <h3 className="text-xl font-bold mb-4">
-                Scan QRIS untuk Pembayaran
-              </h3>
-
-              <img
-                src={qrImage}
-                alt="QRIS"
-                className="w-72 h-72 mx-auto"
+              <input
+                type="text"
+                placeholder="Nama lengkap"
+                value={name}
+                onChange={(e) =>
+                  setName(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-xl px-4 py-3"
               />
 
-              <p className="mt-4 text-lg font-semibold">
-                Total Bayar
-              </p>
-
-              <p className="text-3xl font-bold text-green-600">
-                Rp
-                {paymentData?.total_payment?.toLocaleString()}
-              </p>
-
-              <p className="mt-4 text-sm text-gray-500">
-                Berlaku sampai:
-              </p>
-
-              <p className="font-semibold">
-                {
-                  paymentData?.expired_at
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) =>
+                  setEmail(
+                    e.target.value
+                  )
                 }
-              </p>
+                className="w-full border rounded-xl px-4 py-3"
+              />
+
+              <input
+                type="text"
+                placeholder="Nomor WhatsApp"
+                value={phone}
+                onChange={(e) =>
+                  setPhone(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-xl px-4 py-3"
+              />
+
+              <textarea
+                placeholder="Alamat lengkap"
+                value={address}
+                onChange={(e) =>
+                  setAddress(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-xl px-4 py-3 h-32"
+              />
+
+              <input
+                type="text"
+                placeholder="Kode Pos"
+                value={postalCode}
+                onChange={(e) =>
+                  setPostalCode(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-xl px-4 py-3"
+              />
+
+              <textarea
+                placeholder="Catatan pesanan"
+                value={note}
+                onChange={(e) =>
+                  setNote(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-xl px-4 py-3 h-24"
+              />
+
+              <button
+                onClick={
+                  handleCheckShipping
+                }
+                className="w-full bg-black text-white py-4 rounded-2xl"
+              >
+                {loadingShipping
+                  ? "Loading..."
+                  : "Cek Ongkir"}
+              </button>
+
+              <div className="space-y-3">
+
+                {shippingOptions.map(
+                  (
+                    option,
+                    index
+                  ) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() =>
+                        setSelectedShipping(
+                          option
+                        )
+                      }
+                      className={`w-full border rounded-2xl p-4 text-left ${
+                        selectedShipping?.courier_name ===
+                          option.courier_name &&
+                        selectedShipping?.courier_service_name ===
+                          option.courier_service_name
+                          ? "border-green-600 bg-green-50"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <div className="flex justify-between">
+
+                        <div>
+                          <p className="font-semibold">
+                            {
+                              option.courier_name
+                            }
+                          </p>
+
+                          <p className="text-sm text-gray-500">
+                            {
+                              option.courier_service_name
+                            }
+                          </p>
+
+                          <p className="text-sm text-gray-500">
+                            Estimasi{" "}
+                            {
+                              option.duration
+                            }
+                          </p>
+                        </div>
+
+                        <p className="font-bold">
+                          Rp
+                          {option.price.toLocaleString()}
+                        </p>
+
+                      </div>
+                    </button>
+                  )
+                )}
+              </div>
+
+              <button
+                onClick={
+                  handleCheckout
+                }
+                disabled={
+                  loadingCheckout
+                }
+                className="w-full bg-green-600 text-white py-4 rounded-xl disabled:opacity-50"
+              >
+                {loadingCheckout
+                  ? "Memproses..."
+                  : "Lanjut Pembayaran"}
+              </button>
 
             </div>
-          )}
+          </div>
 
+          {/* SUMMARY */}
+
+          <div className="bg-white rounded-3xl p-8 shadow-sm h-fit">
+
+            <h2 className="text-2xl font-bold mb-6">
+              Ringkasan Pesanan
+            </h2>
+
+            <div className="space-y-4">
+
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex justify-between"
+                >
+
+                  <div>
+                    <p className="font-medium">
+                      {item.name}
+                    </p>
+
+                    <p className="text-sm text-gray-500">
+                      {item.quantity}x
+                    </p>
+                  </div>
+
+                  <p>
+                    Rp
+                    {(
+                      item.price *
+                      item.quantity
+                    ).toLocaleString()}
+                  </p>
+
+                </div>
+              ))}
+
+            </div>
+
+            <div className="border-t mt-6 pt-6 space-y-3">
+
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+
+                <span>
+                  Rp
+                  {subtotal.toLocaleString()}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Ongkir</span>
+
+                <span>
+                  Rp
+                  {shippingCost.toLocaleString()}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-2xl font-bold pt-4 border-t">
+
+                <span>Total</span>
+
+                <span>
+                  Rp
+                  {totalPrice.toLocaleString()}
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

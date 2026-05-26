@@ -1,19 +1,35 @@
-import { NextResponse } from "next/server";
+//api-create-transaction
 
+import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 
-import axios from "axios";
+const midtransClient = require("midtrans-client");
 
 export const runtime = "nodejs";
+
+// =========================
+// MIDTRANS
+// =========================
+
+const snap = new midtransClient.Snap({
+  isProduction: false,
+
+  serverKey: process.env.MIDTRANS_SERVER_KEY,
+});
+
+// =========================
+// CREATE TRANSACTION
+// =========================
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    console.log(
-      "CHECKOUT BODY:",
-      body
-    );
+    console.log("CHECKOUT BODY:", body);
+
+    // =========================
+    // ORDER ID
+    // =========================
 
     const orderId = `ORDER-${Date.now()}`;
 
@@ -22,315 +38,156 @@ export async function POST(req: Request) {
     // =========================
 
     const subtotal = body.items.reduce(
-      (
-        acc: number,
-        item: any
-      ) =>
-        acc +
-        Number(item.price) *
-          Number(
-            item.quantity
-          ),
+      (acc: number, item: any) =>
+        acc + Number(item.price) * Number(item.quantity),
       0
     );
 
-    const shippingCost = Number(
-      body.shippingCost || 0
-    );
+    const shippingCost = Number(body.shippingCost || 0);
 
-    const total =
-      subtotal + shippingCost;
+    const total = subtotal + shippingCost;
 
     // =========================
-    // SAVE ORDER FIRESTORE
+    // ITEM DETAILS
     // =========================
 
-    const orderRef =
-      await adminDb
-        .collection("orders")
-        .add({
-          orderId,
+    const itemDetails = body.items.map((item: any) => ({
+      id: item.id || "product",
 
-          customerName:
-            body.name || "",
+      price: Math.round(item.price),
 
-          email:
-            body.email || "",
+      quantity: Number(item.quantity || 1),
 
-          phone:
-            body.phone || "",
+      name:
+  item.name.length > 50
+    ? item.name.substring(0, 50)
+    : item.name,
+    }));
 
-          address:
-            body.address || "",
+    // ONGKIR
+    if (shippingCost > 0) {
+      itemDetails.push({
+        id: "shipping",
 
-          postalCode:
-            body.postalCode || "",
+        price: shippingCost,
 
-          note:
-            body.note || "",
+        quantity: 1,
 
-          items:
-            body.items || [],
-
-          subtotal,
-
-          shippingCost,
-
-          total,
-
-          courier:
-            body.courier || "",
-
-          courierService:
-            body.courierService ||
-            "",
-
-          paymentStatus:
-            "pending",
-
-          orderStatus:
-            "pending",
-
-          createdAt:
-            new Date(),
-
-          updatedAt:
-            new Date(),
-        });
-
-    // =========================
-    // NOTIF ADMIN
-    // =========================
-
-    const itemsText =
-      body.items
-        .map(
-          (item: any) =>
-            `• ${item.name}
-Qty: ${
-              item.quantity
-            }
-Rp${(
-              item.price *
-              item.quantity
-            ).toLocaleString()}`
-        )
-        .join("\n\n");
-
-    const adminMessage = `🛒 ORDER BARU MASUK
-
-Order ID:
-${orderId}
-
-Nama:
-${body.name}
-
-WhatsApp:
-${body.phone}
-
-Alamat:
-${body.address}
-
-Produk:
-${itemsText}
-
-Subtotal:
-Rp${subtotal.toLocaleString()}
-
-Ongkir:
-Rp${shippingCost.toLocaleString()}
-
-Total:
-Rp${total.toLocaleString()}
-
-Kurir:
-${body.courier} - ${
-      body.courierService
-    }
-`;
-
-    // =========================
-    // SEND WA ADMIN
-    // =========================
-
-    try {
-      await fetch(
-        "https://api.fonnte.com/send",
-        {
-          method: "POST",
-
-          headers: {
-            Authorization:
-              process.env
-                .FONNTE_TOKEN ||
-              "",
-          },
-
-          body:
-            new URLSearchParams(
-              {
-                target:
-                  process.env
-                    .ADMIN_WHATSAPP ||
-                  "",
-
-                message:
-                  adminMessage,
-              }
-            ),
-        }
-      );
-    } catch (waError) {
-      console.log(
-        "FONNTE ERROR:",
-        waError
-      );
-    }
-
-    // =========================
-    // CREATE LOUVIN QRIS
-    // =========================
-
-    const response =
-      await axios.post(
-        "https://api.louvin.dev/create-transaction",
-        {
-          slug:
-            "khairashop25",
-
-          payment_type:
-            "qris",
-
-          amount: total,
-
-          reference:
-            orderId,
-
-          customer_name:
-            body.name,
-
-          customer_email:
-            body.email,
-
-          customer_phone:
-            body.phone,
-
-          items:
-            body.items.map(
-              (item: any) => ({
-                name:
-                  item.name,
-
-                price:
-                  Number(
-                    item.price
-                  ),
-
-                quantity:
-                  Number(
-                    item.quantity
-                  ),
-              })
-            ),
-
-          success_url:
-            "https://www.khairashop25.web.id/payment-success",
-
-          failed_url:
-            "https://www.khairashop25.web.id/payment-failed",
-        },
-
-        {
-          headers: {
-            "x-api-key":
-              process.env
-                .LOUVIN_API_KEY!,
-          },
-        }
-      );
-
-    console.log(
-      "LOUVIN FULL RESPONSE:",
-      JSON.stringify(
-        response.data,
-        null,
-        2
-      )
-    );
-
-    // =========================
-    // VALIDASI QR STRING
-    // =========================
-
-    const qrString =
-      response.data?.payment
-        ?.qr_string;
-
-    if (!qrString) {
-      return NextResponse.json(
-        {
-          success: false,
-
-          message:
-            "QRIS tidak ditemukan",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    // =========================
-    // UPDATE ORDER
-    // =========================
-
-    await adminDb
-      .collection("orders")
-      .doc(orderRef.id)
-      .update({
-        louvinResponse:
-          response.data,
-
-        qrString,
-
-        updatedAt:
-          new Date(),
+        name: "Ongkos Kirim",
       });
+    }
 
     // =========================
-    // SUCCESS
+    // SAVE TO FIRESTORE
     // =========================
+    // save
+
+    const orderRef = await adminDb.collection("orders").add({
+      orderId,
+
+      midtransOrderId: orderId,
+
+      customerName: body.name || "",
+
+      email: body.email || "",
+
+      phone: body.phone || "",
+
+      address: body.address || "",
+
+      postalCode: body.postalCode || "",
+
+      note: body.note || "",
+
+      items: body.items || [],
+
+      subtotal,
+
+      shippingCost,
+
+      total,
+
+      courier: body.courier || "",
+
+      courierService: body.courierService || "",
+
+      paymentStatus: "pending",
+
+      orderStatus: "pending",
+
+      airwayBillId: "",
+
+      trackingId: "",
+
+      trackingLink: "",
+
+      shippingType: "",
+
+      createdAt: new Date(),
+
+      updatedAt: new Date(),
+    });
+
+    console.log("FIRESTORE ORDER ID:", orderRef.id);
+
+    // =========================
+    // MIDTRANS PARAMETER
+    // =========================
+
+    const parameter = {
+      transaction_details: {
+        order_id: orderId,
+
+        gross_amount: Math.round(total),
+      },
+
+      customer_details: {
+        first_name: body.name,
+
+        email: body.email,
+
+        phone: body.phone,
+      },
+
+      item_details: itemDetails,
+    };
+
+    console.log("MIDTRANS PARAMETER:", parameter);
+
+    // =========================
+    // CREATE TRANSACTION
+    // =========================
+
+    const transaction = await snap.createTransaction(parameter);
+
+    console.log("MIDTRANS RESPONSE:", transaction);
 
     return NextResponse.json({
       success: true,
 
-      qrString,
+      token: transaction.token,
+
+      redirect_url: transaction.redirect_url,
 
       orderId,
 
-      firestoreDocId:
-        orderRef.id,
+      firestoreDocId: orderRef.id,
     });
   } catch (error: any) {
-    console.log(
-      "LOUVIN ERROR:",
-      error?.response?.data ||
-        error
-    );
+    console.log("MIDTRANS ERROR:", error);
 
     return NextResponse.json(
-      {
-        success: false,
+  {
+    success: false,
 
-        message:
-          error?.response?.data
-            ?.error ||
-          error?.message ||
-          "Louvin Error",
-      },
-      {
-        status: 500,
-      }
-    );
+    message:
+      error instanceof Error
+        ? error.message
+        : "Midtrans error",
+  },
+  {
+    status: 500,
+  }
+);
   }
 }
