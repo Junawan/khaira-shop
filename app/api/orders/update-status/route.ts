@@ -62,20 +62,55 @@ export async function POST(req: Request) {
       );
     }
 
-    // UPDATE FIRESTORE
-    await orderRef.update({
-      orderStatus: status,
+    // =========================
+// VERIFIKASI PEMBAYARAN QRIS
+// =========================
 
-      trackingNumber:
-        trackingNumber ||
-        order.trackingNumber ||
-        "",
+if (status === "paid") {
+  await orderRef.update({
+    paymentStatus: "paid",
 
-      updatedAt:
-        new Date(),
-    });
+    paymentProofStatus:
+      "verified",
 
-    const trackingUrl = `https://ks25.my.id/tracking/${order.orderId}`;
+    updatedAt: new Date(),
+  });
+
+  return NextResponse.json({
+    success: true,
+  });
+}
+
+// =========================
+// UPDATE STATUS ORDER
+// =========================
+
+await orderRef.update({
+  orderStatus: status,
+
+  trackingNumber:
+    trackingNumber ||
+    order.trackingNumber ||
+    "",
+
+  updatedAt: new Date(),
+});
+
+    const trackingUrl = `https://www.khairashop25.web.id/tracking/${order.orderId}`;
+
+    if (status === "paid") {
+  if (order.phone) {
+    await sendWhatsApp(
+      order.phone,
+      `✅ Pembayaran berhasil diverifikasi
+
+Order:
+${order.orderId}
+
+Pesanan akan segera diproses.`
+    );
+  }
+}
 
     // =========================
     // STATUS: PACKED
@@ -99,7 +134,7 @@ Toko sedang menyiapkan paket kamu ❤️`
       if (order.email) {
         await resend.emails.send({
           from:
-            "Khaira Shop <noreply@ks25.my.id>",
+            "Khaira Shop <noreply@www.khairashop25.web.id>",
 
           to: order.email,
 
@@ -158,7 +193,7 @@ ${trackingUrl}`
       if (order.email) {
         await resend.emails.send({
           from:
-            "Khaira Shop <noreply@ks25.my.id>",
+            "Khaira Shop <noreply@www.khairashop25.web.id>",
 
           to: order.email,
 
@@ -228,7 +263,7 @@ Terima kasih sudah belanja di Khaira Shop ❤️`
       if (order.email) {
         await resend.emails.send({
           from:
-            "Khaira Shop <noreply@ks25.my.id>",
+            "Khaira Shop <noreply@www.khairashop25.web.id>",
 
           to: order.email,
 
@@ -257,6 +292,18 @@ Terima kasih sudah belanja di Khaira Shop ❤️`
         });
       }
     }
+
+    if (order.phone) {
+  await sendWhatsApp(
+    order.phone,
+    `Pembayaran berhasil diverifikasi ✅
+
+Order:
+${order.orderId}
+
+Pesanan akan segera diproses oleh tim kami.`
+  );
+}
 
     return NextResponse.json({
       success: true,

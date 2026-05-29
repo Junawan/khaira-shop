@@ -45,6 +45,12 @@ type Order = {
 
   paymentStatus: string;
 
+  paymentMethod?: string;
+
+paymentProofUrl?: string;
+
+paymentProofStatus?: string;
+
   orderStatus: string;
 
   total: number;
@@ -543,6 +549,47 @@ export default function AdminOrderDetailPage() {
 
           </div>
 
+          {/* PAYMENT PROOF */}
+
+{order.paymentMethod === "bca_qris" && (
+  <div className="mb-10">
+
+    <h2 className="text-2xl font-bold mb-5">
+      Bukti Pembayaran QRIS
+    </h2>
+
+    <div className="bg-gray-50 rounded-2xl p-6">
+
+      <p className="mb-3">
+        Status Bukti:
+        <span className="ml-2 font-semibold">
+          {order.paymentProofStatus || "-"}
+        </span>
+      </p>
+
+      {order.paymentProofUrl ? (
+        <a
+          href={order.paymentProofUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <img
+            src={order.paymentProofUrl}
+            alt="Bukti Pembayaran"
+            className="max-w-md rounded-xl border hover:opacity-90"
+          />
+        </a>
+      ) : (
+        <p className="text-red-500">
+          Bukti pembayaran belum tersedia
+        </p>
+      )}
+
+    </div>
+
+  </div>
+)}
+
           {/* PRODUCTS */}
 
           <div className="mb-10">
@@ -777,6 +824,38 @@ export default function AdminOrderDetailPage() {
           {/* ACTIONS */}
 
           <div className="flex flex-wrap gap-4">
+
+          {order.paymentMethod === "bca_qris" &&
+ order.paymentStatus === "waiting_proof" && (
+
+  <button
+    onClick={async () => {
+      try {
+        await updateDoc(
+          doc(db, "orders", order.id),
+          {
+            paymentStatus: "paid",
+          }
+        );
+
+        alert(
+          "Pembayaran berhasil diverifikasi"
+        );
+
+        fetchOrder();
+      } catch (error) {
+        console.log(error);
+
+        alert(
+          "Gagal verifikasi pembayaran"
+        );
+      }
+    }}
+    className="bg-green-600 text-white px-6 py-4 rounded-2xl"
+  >
+    Verifikasi Pembayaran
+  </button>
+)}
 
             <button
               onClick={() =>

@@ -29,17 +29,28 @@ type OrderItem = {
 type Order = {
   id: string;
   orderId: string;
+
   customerName: string;
   email?: string;
+
   phone: string;
   address: string;
   postalCode: string;
+
   total: number;
   shippingCost: number;
+
   courier: string;
   courierService: string;
+
   orderStatus: string;
   paymentStatus: string;
+
+  paymentMethod?: string;
+
+  paymentProofUrl?: string;
+
+  paymentProofStatus?: string;
 
   trackingNumber?: string;
 
@@ -654,6 +665,31 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
 
+                    {/* BUKTI PEMBAYARAN QRIS */}
+
+{order.paymentMethod === "bca_qris" &&
+  order.paymentProofUrl && (
+    <div className="mt-6 border rounded-2xl p-5 bg-yellow-50">
+
+      <h3 className="font-bold mb-4">
+        Bukti Pembayaran QRIS
+      </h3>
+
+      <img
+        src={order.paymentProofUrl}
+        alt="Bukti Pembayaran"
+        className="w-64 rounded-xl border"
+      />
+
+      <p className="mt-3 text-sm text-gray-600">
+        Status:
+        {" "}
+        {order.paymentProofStatus}
+      </p>
+
+    </div>
+)}
+
                     {/* RIGHT */}
                     <div className="xl:w-[320px] space-y-4">
                       {/* RESI */}
@@ -739,6 +775,18 @@ export default function AdminOrdersPage() {
                             ? "Processing..."
                             : "Proses Dropoff"}
                         </button>
+
+                        {order.paymentMethod === "bca_qris" &&
+ order.paymentStatus === "waiting_proof" && (
+  <button
+    onClick={() =>
+      updateStatus(order.id, "paid")
+    }
+    className="bg-green-600 text-white py-3 rounded-2xl"
+  >
+    Verifikasi Pembayaran
+  </button>
+)}
 
                         <button
                           onClick={() =>

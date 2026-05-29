@@ -60,6 +60,12 @@ export default function CheckoutPage() {
   const [selectedShipping, setSelectedShipping] =
     useState<any>(null);
 
+    const [paymentMethod, setPaymentMethod] =
+  useState("midtrans");
+
+  const [paymentProof, setPaymentProof] =
+  useState<File | null>(null);
+
   const shippingCost =
     selectedShipping?.price || 0;
 
@@ -151,18 +157,29 @@ export default function CheckoutPage() {
       }
 
       if (!selectedShipping) {
-        alert(
-          "Pilih pengiriman"
-        );
-        return;
-      }
+  alert(
+    "Pilih pengiriman"
+  );
+  return;
+}
 
-      if (!window.snap) {
-        alert(
-          "Midtrans belum siap"
-        );
-        return;
-      }
+if (
+  paymentMethod === "bca_qris" &&
+  !paymentProof
+) {
+  alert(
+    "Upload bukti pembayaran terlebih dahulu"
+  );
+  return;
+}
+
+if (
+  paymentMethod === "midtrans" &&
+  !window.snap
+) {
+  alert("Midtrans belum siap");
+  return;
+}
 
       try {
         setLoadingCheckout(true);
@@ -177,27 +194,70 @@ export default function CheckoutPage() {
                   "application/json",
               },
               body: JSON.stringify({
-                name,
-                email,
-                phone,
-                address,
-                postalCode,
-                note,
-                items: cart,
-                shippingCost:
-                  selectedShipping.price,
-                courier:
-                  selectedShipping.courier_name,
-                courierService:
-                  selectedShipping.courier_service_name,
-                total:
-                  totalPrice,
-              }),
+  paymentMethod,
+
+  name,
+  email,
+  phone,
+  address,
+  postalCode,
+  note,
+
+  items: cart,
+
+  shippingCost:
+    selectedShipping.price,
+
+  courier:
+    selectedShipping.courier_name,
+
+  courierService:
+    selectedShipping.courier_service_name,
+
+  total: totalPrice,
+}),
             }
           );
 
         const data =
           await response.json();
+
+          if (
+  paymentMethod === "bca_qris"
+) {
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "file",
+    paymentProof!
+  );
+
+  formData.append(
+    "orderId",
+    data.orderId
+  );
+
+  await fetch(
+    "/api/upload-payment-proof",
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  clearCart();
+
+  alert(
+    "Pesanan berhasil dibuat dan menunggu verifikasi pembayaran."
+  );
+
+  window.location.href =
+    `/payment-success?order_id=${data.orderId}`;
+
+  return;
+}
 
         console.log(data);
 
@@ -210,9 +270,12 @@ export default function CheckoutPage() {
           return;
         }
 
-        window.snap.pay(
-          data.token,
-          {
+        if (
+  paymentMethod === "midtrans"
+) {
+  window.snap.pay(
+    data.token,
+    {
             onSuccess:
               function () {
                 clearCart();
@@ -249,7 +312,9 @@ export default function CheckoutPage() {
               },
           }
         );
-      } catch (error) {
+      }
+    
+} catch (error) {
         console.log(error);
 
         alert(
@@ -265,7 +330,7 @@ export default function CheckoutPage() {
       {/* MIDTRANS SNAP */}
 
       <Script
-        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        src="https://app.midtrans.com/snap/snap.js"
         data-client-key={
           process.env
             .NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
@@ -424,6 +489,8 @@ export default function CheckoutPage() {
                   )
                 )}
               </div>
+
+              {/* PAYMENT METHOD */}
 
               <button
                 onClick={

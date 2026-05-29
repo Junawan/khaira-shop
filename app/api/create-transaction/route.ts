@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
+import { sendWhatsApp } from "@/lib/fonnte";
 
 const midtransClient = require("midtrans-client");
 
@@ -12,7 +13,7 @@ export const runtime = "nodejs";
 // =========================
 
 const snap = new midtransClient.Snap({
-  isProduction: false,
+  isProduction: true,
 
   serverKey: process.env.MIDTRANS_SERVER_KEY,
 });
@@ -26,6 +27,9 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     console.log("CHECKOUT BODY:", body);
+
+    const paymentMethod =
+  body.paymentMethod || "midtrans";
 
     // =========================
     // ORDER ID
@@ -85,7 +89,10 @@ export async function POST(req: Request) {
     const orderRef = await adminDb.collection("orders").add({
       orderId,
 
-      midtransOrderId: orderId,
+      midtransOrderId:
+  paymentMethod === "midtrans"
+    ? orderId
+    : "",
 
       customerName: body.name || "",
 
@@ -111,7 +118,12 @@ export async function POST(req: Request) {
 
       courierService: body.courierService || "",
 
-      paymentStatus: "pending",
+      paymentStatus:
+  paymentMethod === "bca_qris"
+    ? "waiting_proof"
+    : "pending",
+
+      paymentMethod,
 
       orderStatus: "pending",
 
@@ -123,12 +135,92 @@ export async function POST(req: Request) {
 
       shippingType: "",
 
+      paymentProofUrl: "",
+
+paymentProofStatus:
+  paymentMethod === "bca_qris"
+    ? "waiting_upload"
+    : "",
+
       createdAt: new Date(),
 
       updatedAt: new Date(),
     });
 
     console.log("FIRESTORE ORDER ID:", orderRef.id);
+
+    // =========================
+// NOTIF ADMIN
+// =========================
+
+if (process.env.ADMIN_WHATSAPP) {
+  await sendWhatsApp(
+    process.env.ADMIN_WHATSAPP,
+    `🛒 ORDER BARU
+
+Order ID:
+${orderId}
+
+Customer:
+${body.name}
+
+No HP:
+${body.phone}
+
+Total:
+Rp${total.toLocaleString()}
+
+Pembayaran:
+${paymentMethod}
+
+Admin:
+https://www.khairashop25.web.id/admin/orders`
+  );
+}
+
+// =========================
+// NOTIF CUSTOMER
+// =========================
+
+if (body.phone) {
+  await sendWhatsApp(
+    body.phone,
+    `Terima kasih telah berbelanja di Khaira Shop ❤️
+
+Order ID:
+${orderId}
+
+Total:
+Rp${total.toLocaleString()}
+
+Status:
+Menunggu Pembayaran
+
+Cek status pesanan:
+https://www.khairashop25.web.id/tracking/${orderId}`
+  );
+}
+
+    // =========================
+// BCA QRIS STATIS
+// =========================
+
+if (paymentMethod === "bca_qris") {
+  return NextResponse.json({
+    success: true,
+
+    paymentMethod: "bca_qris",
+
+    orderId,
+
+    firestoreDocId: orderRef.id,
+
+    total,
+
+    qrisImage:
+      "/qris-bca.jpg",
+  });
+}
 
     // =========================
     // MIDTRANS PARAMETER
