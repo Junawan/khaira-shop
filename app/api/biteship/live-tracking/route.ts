@@ -38,7 +38,9 @@ export async function GET() {
         result.history || [];
 
       const latest =
-        history[0];
+  history.length > 0
+    ? history[history.length - 1]
+    : null;
 
       await doc.ref.update({
         trackingHistory:
@@ -50,15 +52,23 @@ export async function GET() {
       });
 
       // AUTO DELIVERED
-      if (
-        latest?.status ===
-        "delivered"
-      ) {
-        await doc.ref.update({
-          orderStatus:
-            "delivered",
-        });
-      }
+      if (latest?.status === "delivered") {
+  await doc.ref.update({
+    orderStatus: "delivered",
+  });
+}
+
+if (latest?.status === "cancelled") {
+  await doc.ref.update({
+    orderStatus: "cancelled",
+  });
+}
+
+if (latest?.status === "returned") {
+  await doc.ref.update({
+    orderStatus: "returned",
+  });
+}
     }
 
     return NextResponse.json({

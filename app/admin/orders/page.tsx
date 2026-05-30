@@ -835,6 +835,18 @@ export default function AdminOrdersPage() {
                         <button
   onClick={() =>
     window.open(
+      `/api/generate-label?orderId=${order.id}`,
+      "_blank"
+    )
+  }
+  className="w-full bg-black text-white py-4 rounded-2xl font-semibold"
+>
+  Cetak Resi
+</button>
+
+                        <button
+  onClick={() =>
+    window.open(
       `/api/generate-invoice?orderId=${order.id}`,
       "_blank"
     )

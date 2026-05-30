@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 // =========================
 
 const snap = new midtransClient.Snap({
-  isProduction: false,
+  isProduction: true,
 
   serverKey: process.env.MIDTRANS_SERVER_KEY,
 });
@@ -87,65 +87,72 @@ export async function POST(req: Request) {
     // save
 
     const orderRef = await adminDb.collection("orders").add({
-      orderId,
+  uid: body.uid || "",
 
-      midtransOrderId:
-  paymentMethod === "midtrans"
-    ? orderId
-    : "",
+  orderId,
 
-      customerName: body.name || "",
+  midtransOrderId:
+    paymentMethod === "midtrans"
+      ? orderId
+      : "",
 
-      email: body.email || "",
+  customerName: body.name || "",
 
-      phone: body.phone || "",
+  email: body.email || "",
 
-      address: body.address || "",
+  phone: body.phone || "",
 
-      postalCode: body.postalCode || "",
+  address: body.address || "",
 
-      note: body.note || "",
+  postalCode: body.postalCode || "",
 
-      items: body.items || [],
+  note: body.note || "",
 
-      subtotal,
+  items: body.items || [],
 
-      shippingCost,
+  subtotal,
 
-      total,
+  shippingCost,
 
-      courier: body.courier || "",
+  total,
 
-      courierService: body.courierService || "",
+  courier: body.courier || "",
 
-      paymentStatus:
-  paymentMethod === "bca_qris"
-    ? "waiting_proof"
-    : "pending",
+  courierService:
+    body.courierService || "",
 
-      paymentMethod,
+  paymentStatus:
+    paymentMethod === "bca_qris"
+      ? "waiting_proof"
+      : "pending",
 
-      orderStatus: "pending",
+  paymentMethod,
 
-      airwayBillId: "",
+  orderStatus: "pending",
 
-      trackingId: "",
+  airwayBillId: "",
 
-      trackingLink: "",
+  trackingId: "",
 
-      shippingType: "",
+  trackingLink: "",
 
-      paymentProofUrl: "",
+  shippingType: "",
 
-paymentProofStatus:
-  paymentMethod === "bca_qris"
-    ? "waiting_upload"
-    : "",
+  paymentProofUrl: "",
 
-      createdAt: new Date(),
+  paymentProofStatus:
+    paymentMethod === "bca_qris"
+      ? "waiting_upload"
+      : "",
 
-      updatedAt: new Date(),
-    });
+      customerViewed: true,
+
+customerArchived: false,
+
+  createdAt: new Date(),
+
+  updatedAt: new Date(),
+});
 
     console.log("FIRESTORE ORDER ID:", orderRef.id);
 

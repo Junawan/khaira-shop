@@ -33,7 +33,7 @@ export default function AdminLayout({
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push("/login");
+        router.push("/login-admin");
       }
 
       if (
@@ -48,6 +48,28 @@ export default function AdminLayout({
     adminData,
     loading,
   ]);
+
+  useEffect(() => {
+
+  console.log("USER:", user);
+
+  console.log("ADMIN DATA:", adminData);
+
+  console.log("LOADING:", loading);
+
+  if (!loading) {
+
+    if (!user) {
+      router.push("/login-admin");
+    }
+
+    if (user && !adminData) {
+      router.push("/");
+    }
+
+  }
+
+}, [user, adminData, loading]);
 
   if (loading) {
     return (

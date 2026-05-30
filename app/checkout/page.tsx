@@ -8,6 +8,29 @@ import Script from "next/script";
 
 import { useCartStore } from "@/store/cart";
 
+import { useEffect } from "react";
+
+import {
+  onAuthStateChanged,
+} from "firebase/auth";
+
+import {
+  doc,
+  getDoc,
+} from "firebase/firestore";
+
+import {
+  auth,
+  db,
+} from "@/lib/firebase";
+
+import Link from "next/link";
+
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
 declare global {
   interface Window {
     snap: any;
@@ -19,9 +42,24 @@ export default function CheckoutPage() {
     (state) => state.cart
   );
 
+  const [checkingProfile, setCheckingProfile] =
+  useState(true);
+
+const [profileComplete, setProfileComplete] =
+  useState(false);
+
+const [isLoggedIn, setIsLoggedIn] =
+  useState(false);
+
   const clearCart = useCartStore(
     (state) => state.clearCart
   );
+
+  const [addresses, setAddresses] =
+  useState<any[]>([]);
+
+const [showAddresses, setShowAddresses] =
+  useState(false);
 
   const subtotal = cart.reduce(
     (acc, item) =>
@@ -29,6 +67,77 @@ export default function CheckoutPage() {
       item.price * item.quantity,
     0
   );
+
+  useEffect(() => {
+  const unsubscribe =
+    onAuthStateChanged(
+      auth,
+      async (user) => {
+        if (!user) {
+          setIsLoggedIn(false);
+          setCheckingProfile(false);
+          return;
+        }
+
+        setIsLoggedIn(true);
+
+        const snap =
+          await getDoc(
+            doc(
+              db,
+              "customers",
+              user.uid
+            )
+          );
+
+        if (!snap.exists()) {
+          setCheckingProfile(false);
+          return;
+        }
+
+        const data = snap.data();
+
+setName(data.name || "");
+setEmail(data.email || user.email || "");
+setPhone(data.phone || "");
+setAddress(data.address || "");
+setPostalCode(data.postalCode || "");
+
+const addressSnap =
+  await getDocs(
+    collection(
+      db,
+      "customers",
+      user.uid,
+      "addresses"
+    )
+  );
+
+const list = addressSnap.docs.map(
+  (doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })
+);
+
+setAddresses(list);
+
+const complete =
+  !!data.name &&
+  !!data.phone &&
+  !!data.address &&
+  !!data.postalCode;
+
+setProfileComplete(
+  complete
+);
+
+        setCheckingProfile(false);
+      }
+    );
+
+  return () => unsubscribe();
+}, []);
 
   const [name, setName] =
     useState("");
@@ -194,6 +303,8 @@ if (
                   "application/json",
               },
               body: JSON.stringify({
+  uid: auth.currentUser?.uid,
+
   paymentMethod,
 
   name,
@@ -325,12 +436,74 @@ if (
       }
     };
 
+    if (checkingProfile) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Loading...
+    </div>
+  );
+}
+
+if (!isLoggedIn) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#faf7f2]">
+
+      <div className="bg-white p-8 rounded-3xl shadow text-center">
+
+        <h2 className="text-2xl font-bold mb-4">
+          Login Diperlukan
+        </h2>
+
+        <p className="text-gray-600 mb-6">
+          Silakan login terlebih dahulu untuk melanjutkan checkout.
+        </p>
+
+        <Link
+          href="/login"
+          className="bg-black text-white px-6 py-3 rounded-xl"
+        >
+          Login
+        </Link>
+
+      </div>
+
+    </div>
+  );
+}
+
+if (!profileComplete) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#faf7f2]">
+
+      <div className="bg-white p-8 rounded-3xl shadow max-w-md text-center">
+
+        <h2 className="text-2xl font-bold mb-4">
+          Lengkapi Profil Anda
+        </h2>
+
+        <p className="text-gray-600 mb-6">
+          Untuk melakukan checkout, silakan lengkapi data akun terlebih dahulu.
+        </p>
+
+        <Link
+          href="/account"
+          className="bg-black text-white px-6 py-3 rounded-xl inline-block"
+        >
+          Ke Halaman Akun
+        </Link>
+
+      </div>
+
+    </div>
+  );
+}
+
   return (
     <>
       {/* MIDTRANS SNAP */}
 
       <Script
-        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        src="https://app.midtrans.com/snap/snap.js"
         data-client-key={
           process.env
             .NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
@@ -349,7 +522,65 @@ if (
               Checkout
             </h1>
 
+            <div className="flex justify-between items-center">
+
+  <label className="font-semibold">
+    Alamat Pengiriman
+  </label>
+
+  <button
+    type="button"
+    onClick={() =>
+      setShowAddresses(true)
+    }
+    className="text-blue-600 text-sm"
+  >
+    Gunakan Alamat Lain
+  </button>
+
+</div>
+
             <div className="space-y-5">
+
+              <div className="bg-gray-50 border rounded-2xl p-4 mb-5">
+
+  <div className="flex justify-between items-start">
+
+    <div>
+
+      <p className="font-semibold">
+        {name || "-"}
+      </p>
+
+      <p className="text-sm text-gray-500">
+        {phone || "-"}
+      </p>
+
+      <p className="text-sm mt-2 text-gray-700">
+        {address || "-"}
+      </p>
+
+      <p className="text-sm text-gray-500">
+        Kode Pos: {postalCode || "-"}
+      </p>
+
+    </div>
+
+    {addresses.length > 0 && (
+      <button
+        type="button"
+        onClick={() =>
+          setShowAddresses(true)
+        }
+        className="text-blue-600 text-sm"
+      >
+        Ubah
+      </button>
+    )}
+
+  </div>
+
+</div>
 
               <input
                 type="text"
@@ -582,6 +813,120 @@ if (
 
           </div>
         </div>
+        {showAddresses && (
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+
+    <div className="bg-white rounded-3xl w-full max-w-xl shadow-xl">
+
+      <div className="p-6 border-b">
+
+        <h2 className="text-2xl font-bold">
+          Pilih Alamat Pengiriman
+        </h2>
+
+        <p className="text-gray-500 text-sm mt-1">
+          Pilih salah satu alamat yang tersimpan
+        </p>
+
+      </div>
+
+      <div className="p-6 max-h-[450px] overflow-y-auto space-y-3">
+
+        {addresses.length === 0 ? (
+          <div className="text-center text-gray-500 py-10">
+            Belum ada alamat tersimpan
+          </div>
+        ) : (
+          addresses.map((addr) => (
+            <button
+              key={addr.id}
+              type="button"
+              onClick={() => {
+
+                setName(
+                  addr.receiverName || ""
+                );
+
+                setPhone(
+                  addr.phone || ""
+                );
+
+                setAddress(
+                  addr.address || ""
+                );
+
+                setPostalCode(
+                  addr.postalCode || ""
+                );
+
+                setShippingOptions([]);
+                setSelectedShipping(null);
+
+                setShowAddresses(false);
+
+              }}
+              className="
+                w-full
+                text-left
+                border
+                rounded-2xl
+                p-4
+                hover:border-black
+                hover:bg-gray-50
+                transition
+              "
+            >
+
+              <p className="font-semibold">
+                {addr.label}
+              </p>
+
+              <p className="text-sm mt-1">
+                {addr.receiverName}
+              </p>
+
+              <p className="text-sm text-gray-500">
+                {addr.phone}
+              </p>
+
+              <p className="text-sm text-gray-600 mt-2">
+                {addr.address}
+              </p>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Kode Pos: {addr.postalCode}
+              </p>
+
+            </button>
+          ))
+        )}
+
+      </div>
+
+      <div className="p-6 border-t">
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowAddresses(false)
+          }
+          className="
+            w-full
+            py-3
+            rounded-xl
+            border
+            font-medium
+          "
+        >
+          Tutup
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
       </main>
     </>
   );
