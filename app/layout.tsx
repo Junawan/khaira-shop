@@ -46,4 +46,27 @@ export const metadata = {
     "khairashop25",
   ],
 
+  openGraph: {
+    title:
+      "KhairaShop25",
+    description:
+      "Toko online perlengkapan baking dan usaha kuliner",
+
+    url:
+      "https://www.ks25.my.id",
+
+    siteName:
+      "KhairaShop25",
+
+    images: [
+      {
+        url: "/logo.png",
+      },
+    ],
+
+    locale: "id_ID",
+
+    type: "website",
+  },
+
 };
