@@ -25,6 +25,8 @@ type Product = {
 
   stock: number;
 
+  type?: string;
+
   category?: string;
 
   image?: string;
@@ -34,6 +36,15 @@ type Product = {
   active?: boolean;
 
   featured?: boolean;
+
+  variants?: {
+    name: string;
+    values: {
+      value: string;
+      price: number;
+      stock?: number;
+    }[];
+  }[];
 };
 
 export default function EditProductPage() {
@@ -339,7 +350,113 @@ export default function EditProductPage() {
 
           </div>
 
+          {form.variants &&
+  form.variants.length > 0 && (
+
+  <div>
+
+    <p className="font-semibold mb-4">
+      Varian Produk
+    </p>
+
+    {form.variants.map(
+      (variant, variantIndex) => (
+
+      <div
+        key={variantIndex}
+        className="border rounded-2xl p-4 mb-4"
+      >
+
+        <h3 className="font-bold mb-4">
+          {variant.name}
+        </h3>
+
+        {variant.values.map(
+          (item, valueIndex) => (
+
+          <div
+            key={valueIndex}
+            className="grid md:grid-cols-3 gap-4 mb-4"
+          >
+
+            <input
+              type="text"
+              value={item.value}
+              disabled
+              className="border rounded-xl px-3 py-2"
+            />
+
+            <input
+              type="number"
+              value={item.price}
+              onChange={(e) => {
+
+                const newVariants =
+                  [...form.variants!];
+
+                newVariants[
+                  variantIndex
+                ].values[
+                  valueIndex
+                ].price =
+                  Number(
+                    e.target.value
+                  );
+
+                setForm({
+                  ...form,
+                  variants:
+                    newVariants,
+                });
+
+              }}
+              className="border rounded-xl px-3 py-2"
+            />
+
+            <input
+              type="number"
+              value={
+                item.stock || 0
+              }
+              onChange={(e) => {
+
+                const newVariants =
+                  [...form.variants!];
+
+                newVariants[
+                  variantIndex
+                ].values[
+                  valueIndex
+                ].stock =
+                  Number(
+                    e.target.value
+                  );
+
+                setForm({
+                  ...form,
+                  variants:
+                    newVariants,
+                });
+
+              }}
+              className="border rounded-xl px-3 py-2"
+            />
+
+          </div>
+
+        ))}
+
+      </div>
+
+    ))}
+
+  </div>
+
+)}
+
           {/* PRICE + STOCK */}
+
+          {form.type !== "variant" && (
 
           <div className="grid md:grid-cols-2 gap-6">
 
@@ -396,6 +513,8 @@ export default function EditProductPage() {
             </div>
 
           </div>
+
+          )}
 
           {/* CATEGORY */}
 
