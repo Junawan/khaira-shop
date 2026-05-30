@@ -294,14 +294,20 @@ export default function Home() {
 
               {filteredProducts.map((product) => {
 
-                const finalPrice =
+                let finalPrice = product.price;
+
+if (
   product.variants &&
-  product.variants.length > 0 &&
-  product.variants[0].values &&
-  product.variants[0].values.length > 0
-    ? product.variants[0].values[0]
-        .price
-    : product.price;
+  product.variants.length > 0
+) {
+  const prices =
+    product.variants[0].values.map(
+      (v) => v.price
+    );
+
+  finalPrice =
+    Math.min(...prices);
+}
 
                 return (
                   <Link
