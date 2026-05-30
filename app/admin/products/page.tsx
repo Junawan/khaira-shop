@@ -11,6 +11,8 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
+  updateDoc,
   onSnapshot,
   orderBy,
   query,
@@ -25,6 +27,8 @@ import {
   Search,
 } from "lucide-react";
 
+import * as XLSX from "xlsx";
+
 type Product = {
   id: string;
 
@@ -33,6 +37,15 @@ type Product = {
   price: number;
 
   stock: number;
+
+  variants?: {
+    name: string;
+    values: {
+      value: string;
+      price: number;
+      stock?: number;
+    }[];
+  }[];
 
   category?: string;
 
@@ -80,6 +93,240 @@ export default function AdminProductsPage() {
 
     return () => unsubscribe();
   }, []);
+
+  const handleDownloadExcel =
+async () => {
+
+  const rows: any[] = [];
+
+  products.forEach((product) => {
+
+    if (
+      product.variants &&
+      product.variants.length > 0
+    ) {
+
+      product.variants.forEach(
+        (variant: any) => {
+
+          variant.values.forEach(
+            (value: any) => {
+
+              rows.push({
+
+                productId:
+                  product.id,
+
+                name:
+                  product.name,
+
+                variant:
+                  value.value,
+
+                price:
+                  value.price,
+
+                stock:
+                  value.stock,
+
+              });
+
+            }
+          );
+
+        }
+      );
+
+    } else {
+
+      rows.push({
+
+        productId:
+          product.id,
+
+        name:
+          product.name,
+
+        variant: "",
+
+        price:
+          product.price,
+
+        stock:
+          product.stock,
+
+      });
+
+    }
+
+  });
+
+  const worksheet =
+    XLSX.utils.json_to_sheet(
+      rows
+    );
+
+  const workbook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Products"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "products.xlsx"
+  );
+
+};
+
+const handleUploadExcel = async (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  try {
+
+    const buffer =
+      await file.arrayBuffer();
+
+    const workbook =
+      XLSX.read(buffer);
+
+    const sheet =
+      workbook.Sheets[
+        workbook.SheetNames[0]
+      ];
+
+    const rows: any[] =
+      XLSX.utils.sheet_to_json(
+        sheet
+      );
+
+    let updatedCount = 0;
+
+    for (const row of rows) {
+
+      const productRef = doc(
+        db,
+        "products",
+        row.productId
+      );
+
+      const productSnap =
+        await getDoc(productRef);
+
+      if (!productSnap.exists())
+        continue;
+
+      const productData =
+        productSnap.data();
+
+      // PRODUK VARIAN
+      if (
+        productData.variants &&
+        productData.variants.length > 0
+      ) {
+
+        const updatedVariants =
+          productData.variants.map(
+            (variant: any) => ({
+
+              ...variant,
+
+              values:
+                variant.values.map(
+                  (value: any) => {
+
+                    if (
+                      value.value ===
+                      row.variant
+                    ) {
+
+                      return {
+                        ...value,
+
+                        price:
+                          Number(
+                            row.price
+                          ),
+
+                        stock:
+                          Number(
+                            row.stock
+                          ),
+                      };
+
+                    }
+
+                    return value;
+
+                  }
+                ),
+
+            })
+          );
+
+        await updateDoc(
+          productRef,
+          {
+            variants:
+              updatedVariants,
+
+            updatedAt:
+              new Date(),
+          }
+        );
+
+      }
+
+      // PRODUK TANPA VARIAN
+      else {
+
+        await updateDoc(
+          productRef,
+          {
+            price:
+              Number(
+                row.price
+              ),
+
+            stock:
+              Number(
+                row.stock
+              ),
+
+            updatedAt:
+              new Date(),
+          }
+        );
+
+      }
+
+      updatedCount++;
+
+    }
+
+    alert(
+      `${updatedCount} produk berhasil diperbarui`
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Upload Excel gagal"
+    );
+
+  }
+
+};
 
   // DELETE
   const handleDelete =
@@ -155,6 +402,53 @@ export default function AdminProductsPage() {
               produk
             </p>
           </div>
+
+          <div className="flex flex-wrap gap-3">
+
+  <Link
+    href="/admin/products/create"
+    className="
+      bg-black
+      text-white
+      px-5 py-3
+      rounded-2xl
+    "
+  >
+    Tambah Produk
+  </Link>
+
+  <button
+    onClick={handleDownloadExcel}
+    className="
+      bg-green-600
+      text-white
+      px-5 py-3
+      rounded-2xl
+    "
+  >
+    Download Excel
+  </button>
+
+  <label
+    className="
+      bg-blue-600
+      text-white
+      px-5 py-3
+      rounded-2xl
+      cursor-pointer
+    "
+  >
+    Upload Excel
+
+    <input
+      type="file"
+      accept=".xlsx,.xls"
+      onChange={handleUploadExcel}
+      className="hidden"
+    />
+  </label>
+
+</div>
 
           <Link
             href="/admin/products/create"
