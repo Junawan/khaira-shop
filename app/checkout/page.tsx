@@ -501,6 +501,7 @@ if (!profileComplete) {
   return (
     <>
       {/* MIDTRANS SNAP */}
+      {/* MIDTRANS SNAP */}
 
       <Script
         src="https://app.midtrans.com/snap/snap.js"
