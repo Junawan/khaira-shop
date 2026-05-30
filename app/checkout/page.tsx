@@ -489,8 +489,7 @@ if (
                   )
                 )}
               </div>
-
-              {/* PAYMENT METHOD */}
+              
 
               <button
                 onClick={
