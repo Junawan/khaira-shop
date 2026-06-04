@@ -18,6 +18,8 @@ import { db } from "@/lib/firebase";
 type Product = {
   id: string;
 
+  slug?: string;
+
   name: string;
 
   price: number;
@@ -312,7 +314,7 @@ if (
                 return (
                   <Link
                     key={product.id}
-                    href={`/product/${product.id}`}
+                    href={`/product/${product.slug}`}
                     className="group"
                   >
 

@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import {
-  doc,
-  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -38,6 +40,8 @@ type Variant = {
 
 type Product = {
   id?: string;
+
+  slug?: string;
 
   name: string;
 
@@ -90,85 +94,93 @@ export default function ProductDetailPage() {
 ] = useState("");
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const docRef = doc(
-          db,
-          "products",
-          params.id as string
-        );
+  const fetchProduct = async () => {
+    try {
+
+      const q = query(
+        collection(db, "products"),
+        where(
+          "slug",
+          "==",
+          params.slug
+        )
+      );
+
+      const snapshot =
+        await getDocs(q);
+
+      if (!snapshot.empty) {
 
         const docSnap =
-          await getDoc(docRef);
+          snapshot.docs[0];
 
-        if (docSnap.exists()) {
-          const data =
-            docSnap.data();
+        const data =
+          docSnap.data();
 
-          const productData: Product = {
-            id: docSnap.id,
+        const productData: Product = {
+          id: docSnap.id,
+          slug: data.slug || "",
+          name: data.name || "",
+          description:
+            data.description || "",
+          image:
+            data.image || "",
+          images:
+            data.images || [],
+          price:
+            data.price || 0,
+          variants:
+            data.variants || [],
+          weight:
+            data.weight || 0,
+          length:
+            data.length || 0,
+          width:
+            data.width || 0,
+          height:
+            data.height || 0,
+        };
 
-            name: data.name || "",
+        setProduct(productData);
 
-            description:
-              data.description || "",
-
-            image: data.image || "",
-
-images: data.images || [],
-
-            price: data.price || 0,
-
-            variants:
-              data.variants || [],
-
-            weight:
-              data.weight || 0,
-
-            length:
-              data.length || 0,
-
-            width:
-              data.width || 0,
-
-            height:
-              data.height || 0,
-          };
-
-          setProduct(productData);
-
-          if (
-  productData.images &&
-  productData.images.length > 0
-) {
-  setSelectedImage(
-    productData.images[0]
-  );
-} else {
-  setSelectedImage(
-    productData.image || ""
-  );
-}
-
-          if (
-  productData.variants &&
-  productData.variants.length > 0 &&
-  productData.variants[0].values.length > 0
-) {
-  setSelectedVariant(
-    productData.variants[0].values[0]
-  );
-}
+        if (
+          productData.images &&
+          productData.images.length > 0
+        ) {
+          setSelectedImage(
+            productData.images[0]
+          );
+        } else {
+          setSelectedImage(
+            productData.image || ""
+          );
         }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchProduct();
-  }, [params.id]);
+        if (
+          productData.variants &&
+          productData.variants.length > 0 &&
+          productData.variants[0].values.length > 0
+        ) {
+          setSelectedVariant(
+            productData.variants[0].values[0]
+          );
+        }
+      }
+
+    } catch (error) {
+
+      console.error(error);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+  fetchProduct();
+
+}, [params.slug]);
 
   if (loading) {
     return (
