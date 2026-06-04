@@ -1,58 +1,38 @@
 import { MetadataRoute } from "next";
-
-import {
-  collection,
-  getDocs,
-} from "firebase/firestore";
-
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebase-admin";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
-  const baseUrl =
-    "https://www.ks25.my.id";
+  const snapshot = await adminDb
+    .collection("products")
+    .get();
 
-  const staticPages: MetadataRoute.Sitemap = [
+  const products = snapshot.docs.map((doc) => {
+    const data = doc.data();
+
+    return {
+      url: `https://www.ks25.my.id/product/${data.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+    };
+  });
+
+  return [
     {
-      url: baseUrl,
+      url: "https://www.ks25.my.id",
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
     },
 
     {
-      url: `${baseUrl}/tentang-kami`,
+      url: "https://www.ks25.my.id/tentang-kami",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
 
-    {
-      url: `${baseUrl}/cart`,
-      lastModified: new Date(),
-      priority: 0.5,
-    },
-  ];
-
-  const snapshot =
-    await getDocs(
-      collection(db, "products")
-    );
-
-  const productPages =
-    snapshot.docs.map((doc) => {
-      const data = doc.data();
-
-      return {
-        url: `${baseUrl}/product/${data.slug}`,
-        lastModified: new Date(),
-        changeFrequency: "weekly" as const,
-        priority: 0.9,
-      };
-    });
-
-  return [
-    ...staticPages,
-    ...productPages,
+    ...products,
   ];
 }
