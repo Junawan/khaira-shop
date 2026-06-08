@@ -15,13 +15,10 @@ export async function POST(req: Request) {
         },
 
         body: JSON.stringify({
-          origin_postal_code: "16820",
+          origin_postal_code: "16810",
 
           destination_postal_code:
             body.destination_postal_code,
-
-          couriers:
-            "jne,sicepat,jnt,anteraja,pos",
 
           items: body.items,
         }),
