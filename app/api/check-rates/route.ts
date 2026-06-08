@@ -20,6 +20,9 @@ export async function POST(req: Request) {
           destination_postal_code:
             body.destination_postal_code,
 
+          couriers:
+            "jne,sicepat,jnt,anteraja,gojek,grab,lalamove,lion",
+
           items: body.items,
         }),
       }
@@ -27,13 +30,7 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-console.log(
-  "BITESHIP RESPONSE:",
-  JSON.stringify(data, null, 2)
-);
-
-return NextResponse.json(data);
-
+    return NextResponse.json(data);
   } catch (error) {
     console.log(error);
 
