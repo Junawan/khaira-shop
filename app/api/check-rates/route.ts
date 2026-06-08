@@ -27,7 +27,13 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-    return NextResponse.json(data);
+console.log(
+  "BITESHIP RESPONSE:",
+  JSON.stringify(data, null, 2)
+);
+
+return NextResponse.json(data);
+
   } catch (error) {
     console.log(error);
 
