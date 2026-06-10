@@ -1,36 +1,18 @@
 import "./globals.css";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import type { Metadata } from "next";
 
-import {
-  AuthProvider,
-} from "@/components/providers/AuthProvider";
+export const metadata: Metadata = {
+  metadataBase: new URL("https://www.ks25.my.id"),
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-
-      <body>
-
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-
-      </body>
-
-    </html>
-  );
-}
-
-export const metadata = {
-
-  title:
-    "KhairaShop25 - Loyang & Peralatan Baking",
+  title: "KhairaShop25 - Loyang & Peralatan Baking",
 
   description:
     "Toko online loyang, peralatan baking, cetakan kue, perlengkapan dapur dan usaha bakery dengan harga murah.",
+
+  alternates: {
+    canonical: "/",
+  },
 
   keywords: [
     "loyang",
@@ -47,26 +29,31 @@ export const metadata = {
   ],
 
   openGraph: {
-    title:
-      "KhairaShop25",
+    title: "KhairaShop25",
     description:
       "Toko online perlengkapan baking dan usaha kuliner",
-
-    url:
-      "https://www.ks25.my.id",
-
-    siteName:
-      "KhairaShop25",
-
+    url: "https://www.ks25.my.id",
+    siteName: "KhairaShop25",
     images: [
       {
         url: "/logo.png",
       },
     ],
-
     locale: "id_ID",
-
     type: "website",
   },
-
 };
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="id">
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
+    </html>
+  );
+}
