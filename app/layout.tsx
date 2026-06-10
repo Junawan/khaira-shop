@@ -14,6 +14,10 @@ export const metadata: Metadata = {
     canonical: "/",
   },
 
+  verification: {
+    google: "lYnSkEZf3Gi2djxhSXGAInSWJ7tIXcsr6wKwMc4azD0",
+  },
+
   keywords: [
     "loyang",
     "loyang brownies",
