@@ -113,105 +113,79 @@ const [avgRating, setAvgRating] =
 
   useEffect(() => {
   const fetchProduct = async () => {
-    try {
+  try {
+    const snapshot = await getDocs(collection(db, "products"));
 
-      const q = query(
-        collection(db, "products"),
-        where(
-          "slug",
-          "==",
-          params.slug
-        )
+    const slugParam = (params.slug as string).toString();
+
+    const docSnap = snapshot.docs.find((doc) => {
+      const data = doc.data();
+
+      return (
+        String(data.slug).trim().toLowerCase() ===
+        slugParam.trim().toLowerCase()
       );
+    });
 
-      const snapshot =
-        await getDocs(q);
-
-      if (!snapshot.empty) {
-
-        const docSnap =
-          snapshot.docs[0];
-
-        const data =
-          docSnap.data();
-
-        const productData: Product = {
-          id: docSnap.id,
-          slug: data.slug || "",
-          name: data.name || "",
-          description:
-            data.description || "",
-          image:
-            data.image || "",
-          images:
-            data.images || [],
-          price:
-            data.price || 0,
-          variants:
-            data.variants || [],
-          weight:
-            data.weight || 0,
-          length:
-            data.length || 0,
-          width:
-            data.width || 0,
-          height:
-            data.height || 0,
-            rating: data.rating || 0,
-reviewCount: data.reviewCount || 0,
-        };
-
-        setProduct(productData);
-
-        const reviewQuery = query(
-  collection(db, "reviews"),
-  where("productId", "==", docSnap.id)
-);
-
-const reviewSnapshot = await getDocs(reviewQuery);
-
-const reviewData = reviewSnapshot.docs.map((doc) => ({
-  id: doc.id,
-  ...(doc.data() as Omit<Review, "id">),
-}));
-
-setReviews(reviewData);
-
-
-        if (
-          productData.images &&
-          productData.images.length > 0
-        ) {
-          setSelectedImage(
-            productData.images[0]
-          );
-        } else {
-          setSelectedImage(
-            productData.image || ""
-          );
-        }
-
-        if (
-          productData.variants &&
-          productData.variants.length > 0 &&
-          productData.variants[0].values.length > 0
-        ) {
-          setSelectedVariant(
-            productData.variants[0].values[0]
-          );
-        }
-      }
-
-    } catch (error) {
-
-      console.error(error);
-
-    } finally {
-
+    if (!docSnap) {
+      setProduct(null);
       setLoading(false);
-
+      return;
     }
-  };
+
+    const data = docSnap.data();
+
+    const productData: Product = {
+      id: docSnap.id,
+      slug: data.slug || "",
+      name: data.name || "",
+      description: data.description || "",
+      image: data.image || "",
+      images: data.images || [],
+      price: data.price || 0,
+      variants: data.variants || [],
+      weight: data.weight || 0,
+      length: data.length || 0,
+      width: data.width || 0,
+      height: data.height || 0,
+      rating: data.rating || 0,
+      reviewCount: data.reviewCount || 0,
+    };
+
+    setProduct(productData);
+
+    const reviewQuery = query(
+      collection(db, "reviews"),
+      where("productId", "==", docSnap.id)
+    );
+
+    const reviewSnapshot = await getDocs(reviewQuery);
+
+    const reviewData = reviewSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Review, "id">),
+    }));
+
+    setReviews(reviewData);
+
+    if (productData.images?.length) {
+      setSelectedImage(productData.images[0]);
+    } else {
+      setSelectedImage(productData.image || "");
+    }
+
+    if (
+      productData.variants?.length &&
+      productData.variants[0].values.length
+    ) {
+      setSelectedVariant(productData.variants[0].values[0]);
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   fetchProduct();
 

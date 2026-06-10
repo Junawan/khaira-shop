@@ -47,6 +47,20 @@ type Product = {
   }[];
 };
 
+const categories = [
+  "Loyang",
+  "Cetakan Kue",
+  "Peralatan Dapur",
+  "Baking Tools",
+  "Aksesoris",
+  "Kukusan",
+  "pemanggang",
+  "Oven",
+  "Lampu",
+  "Rak",
+  "Dandang",
+];
+
 export default function EditProductPage() {
   const params = useParams();
 
@@ -516,34 +530,33 @@ export default function EditProductPage() {
 
           )}
 
-          {/* CATEGORY */}
+          {/* KATEGORI */}
+<div>
+  <p className="font-semibold mb-3">
+    Kategori
+  </p>
 
-          <div>
+  <select
+    value={form.category || ""}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        category: e.target.value,
+      })
+    }
+    className="w-full border rounded-2xl px-4 py-3"
+  >
+    <option value="">
+      Pilih Kategori
+    </option>
 
-            <p className="font-semibold mb-3">
-
-              Kategori
-
-            </p>
-
-            <input
-              type="text"
-              value={
-                form.category ||
-                ""
-              }
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  category:
-                    e.target
-                      .value,
-                })
-              }
-              className="w-full border rounded-2xl px-4 py-3"
-            />
-
-          </div>
+    {categories.map((cat) => (
+      <option key={cat} value={cat}>
+        {cat}
+      </option>
+    ))}
+  </select>
+</div>
 
           {/* ACTIVE */}
 

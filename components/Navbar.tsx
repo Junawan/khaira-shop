@@ -17,6 +17,8 @@ import { auth } from "@/lib/firebase";
 import {
   doc,
   getDoc,
+  getDocs,
+  collection,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -32,10 +34,20 @@ import {
   X,
 } from "lucide-react";
 
+import { useRef } from "react";
+
+
 export default function Navbar() {
   const cart = useCartStore(
     (state) => state.cart
   );
+
+  const [categoryOpen, setCategoryOpen] = useState(false);
+const [categories, setCategories] = useState<string[]>([]);
+
+const categoryRef = useRef<HTMLDivElement>(null);
+
+const [loadingCategories, setLoadingCategories] = useState(true);
 
   const [mobileMenuOpen, setMobileMenuOpen] =
   useState(false);
@@ -81,6 +93,57 @@ useEffect(() => {
     );
 
   return () => unsubscribe();
+}, []);
+
+useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "products"));
+
+      const allCategories = snapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+
+          if (!data.active) return null; // hanya produk aktif
+          if (!data.category) return null;
+
+          return data.category.trim();
+        })
+        .filter(Boolean) as string[];
+
+      const uniqueCategories = Array.from(
+  new Set(
+    allCategories
+      .filter(Boolean)
+      .map((cat) => cat.trim())
+  )
+);
+
+      setCategories(uniqueCategories);
+      setLoadingCategories(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  fetchCategories();
+}, []);
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      categoryRef.current &&
+      !categoryRef.current.contains(event.target as Node)
+    ) {
+      setCategoryOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
 }, []);
 
 const handleLogout = async () => {
@@ -177,6 +240,36 @@ const [customerName, setCustomerName] =
     >
       Akun Saya
     </Link>
+
+    <div className="relative" ref={categoryRef}>
+  <button
+    onClick={() => setCategoryOpen(!categoryOpen)}
+    className="px-4 py-2 rounded-xl border"
+  >
+    Kategori
+  </button>
+
+  {categoryOpen && (
+    <div className="absolute top-12 left-0 bg-white border rounded-xl shadow-md w-48 z-50">
+      {categories.length === 0 ? (
+        <p className="p-3 text-sm text-gray-500">
+          Loading...
+        </p>
+      ) : (
+        categories.map((cat) => (
+          <Link
+            key={cat}
+            href={`/kategori/${encodeURIComponent(cat)}`}
+            onClick={() => setCategoryOpen(false)}
+            className="block px-4 py-2 hover:bg-gray-100 text-sm"
+          >
+            {cat}
+          </Link>
+        ))
+      )}
+    </div>
+  )}
+</div>
 
     <button
       onClick={handleLogout}
@@ -324,6 +417,31 @@ const [customerName, setCustomerName] =
       </div>
 
       <div className="flex flex-col gap-3">
+
+      {categories.length > 0 && (
+  <div className="border-b pb-3 mb-3">
+    <p className="text-sm font-semibold mb-2">
+      Kategori
+    </p>
+
+    <div className="flex flex-col gap-2">
+      {categories.map((cat) => {
+  const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+
+  return (
+    <Link
+      key={cat}
+      href={`/kategori/${encodeURIComponent(cat)}`}
+      onClick={() => setCategoryOpen(false)}
+      className="block px-4 py-2 hover:bg-gray-100 text-sm"
+    >
+      {label}
+    </Link>
+  );
+})}
+    </div>
+  </div>
+)}
 
         {user ? (
 
