@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 
 import {
   doc,
-  getDoc
+  getDoc,
+  addDoc,
+  collection,
+  serverTimestamp,
+  updateDoc,
+  getDocs,
+  query,
+  where,
+  
 } from "firebase/firestore";
 
 import {
@@ -16,6 +24,8 @@ import {
 } from "next/navigation";
 
 import Script from "next/script";
+
+import { increment } from "firebase/firestore";
 
 declare global {
   interface Window {
@@ -34,6 +44,15 @@ export default function OrderDetailPage() {
     useState(true);
 
     const [loadingPay, setLoadingPay] =
+  useState(false);
+
+  const [reviewText, setReviewText] =
+  useState("");
+
+const [rating, setRating] =
+  useState(5);
+
+const [sendingReview, setSendingReview] =
   useState(false);
 
 const handlePayAgain =
@@ -94,6 +113,71 @@ const handlePayAgain =
       setLoadingPay(false);
 
     }
+};
+
+const submitReview = async (
+  product: any
+) => {
+
+  try {
+    if (!reviewText.trim()) {
+  alert("Tulis ulasan terlebih dahulu");
+  return;
+}
+
+    setSendingReview(true);
+
+    await addDoc(
+      collection(db, "reviews"),
+      {
+        productId:
+          product.id,
+
+        productName:
+          product.name,
+
+        orderId:
+          order.orderId,
+
+        customerName:
+          order.customerName,
+
+        rating,
+
+        review:
+          reviewText,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    await updateDoc(doc(db, "products", product.id), {
+  ratingSum: increment(rating),
+  reviewCount: increment(1),
+});
+
+    alert(
+      "Ulasan berhasil dikirim"
+    );
+
+    setReviewText("");
+
+    setRating(5);
+
+  } catch (error) {
+
+    console.log(error);
+
+    alert(
+      "Gagal mengirim ulasan"
+    );
+
+  } finally {
+
+    setSendingReview(false);
+
+  }
 };
 
   useEffect(() => {
@@ -372,6 +456,114 @@ const handlePayAgain =
           </div>
 
         )}
+
+        {(
+  order.paymentStatus ===
+    "settlement" ||
+  order.paymentStatus ===
+    "capture"
+) && (
+
+  <div className="bg-white rounded-3xl p-6 shadow-sm">
+
+    <h2 className="text-xl font-bold mb-4">
+
+      Beri Ulasan
+
+    </h2>
+
+    <div className="space-y-6">
+
+      {order.items?.map(
+        (
+          item: any,
+          index: number
+        ) => (
+
+          <div
+            key={index}
+            className="border rounded-2xl p-4"
+          >
+
+            <p className="font-semibold mb-3">
+
+              {item.name}
+
+            </p>
+
+            <select
+              value={rating}
+              onChange={(e) =>
+                setRating(
+                  Number(
+                    e.target.value
+                  )
+                )
+              }
+              className="border rounded-lg px-3 py-2 mb-3"
+            >
+
+              <option value={5}>
+                ⭐⭐⭐⭐⭐
+              </option>
+
+              <option value={4}>
+                ⭐⭐⭐⭐
+              </option>
+
+              <option value={3}>
+                ⭐⭐⭐
+              </option>
+
+              <option value={2}>
+                ⭐⭐
+              </option>
+
+              <option value={1}>
+                ⭐
+              </option>
+
+            </select>
+
+            <textarea
+              value={reviewText}
+              onChange={(e) =>
+                setReviewText(
+                  e.target.value
+                )
+              }
+              placeholder="Tulis ulasan..."
+              className="w-full border rounded-xl p-3 mb-3"
+            />
+
+            <button
+              onClick={() =>
+                submitReview(
+                  item
+                )
+              }
+              disabled={
+                sendingReview
+              }
+              className="bg-green-600 text-white px-5 py-2 rounded-xl"
+            >
+
+              {sendingReview
+                ? "Mengirim..."
+                : "Kirim Ulasan"}
+
+            </button>
+
+          </div>
+
+        )
+      )}
+
+    </div>
+
+  </div>
+
+)}
 
         {/* TOTAL */}
 

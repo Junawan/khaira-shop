@@ -24,6 +24,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 
+import { Star } from "lucide-react";
+
 type VariantValue = {
   value: string;
 
@@ -62,9 +64,25 @@ type Product = {
   width?: number;
 
   height?: number;
+
+  rating?: number;
+  reviewCount?: number;
+};
+
+type Review = {
+  id: string;
+  customerName: string;
+  rating: number;
+  review: string;
 };
 
 export default function ProductDetailPage() {
+
+  const [reviews, setReviews] =
+  useState<Review[]>([]);
+
+const [avgRating, setAvgRating] =
+  useState(0);
   const params = useParams();
 
   const router = useRouter();
@@ -139,9 +157,26 @@ export default function ProductDetailPage() {
             data.width || 0,
           height:
             data.height || 0,
+            rating: data.rating || 0,
+reviewCount: data.reviewCount || 0,
         };
 
         setProduct(productData);
+
+        const reviewQuery = query(
+  collection(db, "reviews"),
+  where("productId", "==", docSnap.id)
+);
+
+const reviewSnapshot = await getDocs(reviewQuery);
+
+const reviewData = reviewSnapshot.docs.map((doc) => ({
+  id: doc.id,
+  ...(doc.data() as Omit<Review, "id">),
+}));
+
+setReviews(reviewData);
+
 
         if (
           productData.images &&
@@ -352,17 +387,42 @@ product.images.filter(Boolean).length > 0 && (
   </div>
 )}
 
-</div>
-
-        
+        </div>
 
         {/* INFO */}
 
-        <div className="bg-white rounded-3xl p-8 shadow-sm">
+  <div className="bg-white rounded-3xl p-8 shadow-sm">
+  <div className="mb-6">
 
-          <h1 className="text-4xl font-bold mb-4">
-            {product.name}
-          </h1>
+  <div className="flex items-center gap-2 mb-2">
+
+    <div className="flex">
+      {[1,2,3,4,5].map((star) => (
+  <Star
+    key={star}
+    size={16}
+    className={
+      star <= Math.round(product.rating || 0)
+        ? "fill-yellow-400 text-yellow-400"
+        : "text-gray-300"
+    }
+  />
+))}
+    </div>
+
+    <span className="text-sm text-gray-600">
+  {product.rating
+  ? `${product.rating.toFixed(1)} (${product.reviewCount || 0} ulasan)`
+  : "Belum ada ulasan"}
+</span>
+
+  </div>
+
+  <h1 className="text-3xl font-bold">
+    {product.name}
+  </h1>
+
+</div>
 
           <p className="text-3xl font-semibold text-green-700 mb-8">
 
@@ -470,23 +530,9 @@ product.images.filter(Boolean).length > 0 && (
 
           </div>
 
-          {/* DESCRIPTION */}
-
-          <div className="mb-10">
-
-            <h2 className="text-xl font-semibold mb-3">
-              Deskripsi Produk
-            </h2>
-
-            <p className="text-gray-600 leading-8 whitespace-pre-line">
-              {product.description}
-            </p>
-
-          </div>
-
           {/* BUTTON */}
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
 
             <button
               onClick={() => handleAddToCart()}
@@ -515,9 +561,89 @@ product.images.filter(Boolean).length > 0 && (
 
           </div>
 
+          {/* DESCRIPTION */}
+
+          <div className="mb-10">
+
+            <h2 className="text-xl font-semibold mb-3">
+              Deskripsi Produk
+            </h2>
+
+            <p className="text-gray-600 leading-8 whitespace-pre-line">
+              {product.description}
+            </p>
+
+          </div>
+
+          <div className="mt-12">
+
+  <h2 className="text-xl font-semibold mb-6">
+
+    Ulasan Pembeli
+
+  </h2>
+
+  {reviews.length === 0 ? (
+
+    <p className="text-gray-500">
+
+      Belum ada ulasan
+
+    </p>
+
+  ) : (
+
+    <div className="space-y-4">
+
+      {reviews.map((review) => (
+
+        <div
+          key={review.id}
+          className="border rounded-2xl p-4"
+        >
+
+          <div className="flex items-center gap-2 mb-2">
+
+            {[1,2,3,4,5].map((star) => (
+  <Star
+    key={star}
+    size={16}
+    className={
+      star <= review.rating
+        ? "fill-yellow-400 text-yellow-400"
+        : "text-gray-300"
+    }
+  />
+))}
+
+          </div>
+
+          <p className="font-medium">
+
+            {review.customerName}
+
+          </p>
+
+          <p className="text-gray-600 mt-2">
+
+            {review.review}
+
+          </p>
+
         </div>
 
-      </div>
+      ))}
+
+    </div>
+
+  )}
+
+</div>
+
+
+        </div>
+
+        </div>
 
     </main>
   );
