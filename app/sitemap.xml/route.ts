@@ -7,11 +7,11 @@ export async function GET() {
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <sitemap>
-  <loc>${baseUrl}/sitemap-products-1.xml</loc>
+  <loc>${baseUrl}/sitemap-pages.xml</loc>
 </sitemap>
 
 <sitemap>
-  <loc>${baseUrl}/sitemap-products-2.xml</loc>
+  <loc>${baseUrl}/sitemap-products-1.xml</loc>
 </sitemap>
 
 </sitemapindex>`;
