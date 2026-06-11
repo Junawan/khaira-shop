@@ -21,11 +21,9 @@ export async function GET() {
 </sitemapindex>`;
 
   return new NextResponse(xml.trim(), {
-  headers: {
-    "Content-Type": "application/xml; charset=utf-8",
-
-    // 🔥 penting: MATIKAN CACHE
-    "Cache-Control": "no-store, no-cache, must-revalidate",
-  },
-});
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
 }
