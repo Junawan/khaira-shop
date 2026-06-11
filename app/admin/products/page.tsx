@@ -113,23 +113,13 @@ async () => {
             (value: any) => {
 
               rows.push({
-
-                productId:
-                  product.id,
-
-                name:
-                  product.name,
-
-                variant:
-                  value.value,
-
-                price:
-                  value.price,
-
-                stock:
-                  value.stock,
-
-              });
+  productId: product.id,
+  name: product.name,
+  category: product.category || "",
+  variant: value.value,
+  price: value.price,
+  stock: value.stock,
+});
 
             }
           );
@@ -140,22 +130,13 @@ async () => {
     } else {
 
       rows.push({
-
-        productId:
-          product.id,
-
-        name:
-          product.name,
-
-        variant: "",
-
-        price:
-          product.price,
-
-        stock:
-          product.stock,
-
-      });
+  productId: product.id,
+  name: product.name,
+  category: product.category || "",
+  variant: "",
+  price: product.price,
+  stock: product.stock,
+});
 
     }
 
@@ -273,15 +254,13 @@ const handleUploadExcel = async (
           );
 
         await updateDoc(
-          productRef,
-          {
-            variants:
-              updatedVariants,
-
-            updatedAt:
-              new Date(),
-          }
-        );
+  productRef,
+  {
+    variants: updatedVariants,
+    category: row.category || "",
+    updatedAt: new Date(),
+  }
+);
 
       }
 
@@ -289,22 +268,13 @@ const handleUploadExcel = async (
       else {
 
         await updateDoc(
-          productRef,
-          {
-            price:
-              Number(
-                row.price
-              ),
-
-            stock:
-              Number(
-                row.stock
-              ),
-
-            updatedAt:
-              new Date(),
-          }
-        );
+  productRef,
+  {
+    price: Number(row.price),
+    stock: Number(row.stock),
+    updatedAt: new Date(),
+  }
+);
 
       }
 
