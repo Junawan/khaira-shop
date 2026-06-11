@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+
 export async function GET() {
   const baseUrl = "https://www.ks25.my.id";
 
@@ -33,6 +37,7 @@ ${products.join("")}
   return new NextResponse(xml, {
     headers: {
       "Content-Type": "application/xml",
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400"
     },
   });
 }
