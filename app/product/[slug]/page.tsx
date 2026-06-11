@@ -26,6 +26,8 @@ import {
 
 import { Star } from "lucide-react";
 
+import Link from "next/link";
+
 type VariantValue = {
   value: string;
 
@@ -67,6 +69,7 @@ type Product = {
 
   rating?: number;
   reviewCount?: number;
+  category?: string;
 };
 
 type Review = {
@@ -116,7 +119,7 @@ const [avgRating, setAvgRating] =
   try {
     const snapshot = await getDocs(collection(db, "products"));
 
-    const slugParam = (params.slug as string).toString();
+    const slugParam = String(params.slug || "");
 
     const docSnap = snapshot.docs.find((doc) => {
       const data = doc.data();
@@ -150,6 +153,7 @@ const [avgRating, setAvgRating] =
       height: data.height || 0,
       rating: data.rating || 0,
       reviewCount: data.reviewCount || 0,
+      category: data.category || "",
     };
 
     setProduct(productData);
@@ -176,7 +180,7 @@ const [avgRating, setAvgRating] =
 
     if (
       productData.variants?.length &&
-      productData.variants[0].values.length
+      productData.variants[0]?.values?.length
     ) {
       setSelectedVariant(productData.variants[0].values[0]);
     }
@@ -391,6 +395,17 @@ product.images.filter(Boolean).length > 0 && (
 </span>
 
   </div>
+
+  {product.category && (
+  <div className="mb-2">
+    <Link
+      href={`/kategori/${encodeURIComponent(product.category)}`}
+      className="text-sm text-blue-600 hover:underline"
+    >
+      {product.category}
+    </Link>
+  </div>
+)}
 
   <h1 className="text-3xl font-bold">
     {product.name}

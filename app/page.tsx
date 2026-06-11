@@ -51,14 +51,26 @@ export default function Home() {
     const [search, setSearch] =
   useState("");
 
-  const filteredProducts =
-  products.filter((product) =>
-    product.name
-      .toLowerCase()
-      .includes(
-        search.toLowerCase()
-      )
-  );
+  const [currentPage, setCurrentPage] = useState(1);
+const itemsPerPage = 20;
+
+  const filteredProducts = products.filter((product) =>
+  product.name.toLowerCase().includes(search.toLowerCase())
+);
+
+// pagination logic
+const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+const startIndex = (currentPage - 1) * itemsPerPage;
+
+const paginatedProducts = filteredProducts.slice(
+  startIndex,
+  startIndex + itemsPerPage
+);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [search]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -294,7 +306,7 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
 
-              {filteredProducts.map((product) => {
+              {paginatedProducts.map((product) => {
 
                 let finalPrice = product.price;
 
@@ -340,6 +352,50 @@ if (
         </div>
 
       </section>
+
+      {totalPages > 1 && (
+  <div className="flex items-center justify-center gap-2 mt-10 flex-wrap">
+
+    {/* Prev */}
+    <button
+      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+      className="px-4 py-2 bg-white border rounded-xl"
+    >
+      &lt;
+    </button>
+
+    {/* Pages */}
+    {Array.from({ length: totalPages }, (_, i) => i + 1)
+      .slice(
+        Math.max(0, currentPage - 3),
+        Math.min(totalPages, currentPage + 2)
+      )
+      .map((page) => (
+        <button
+          key={page}
+          onClick={() => setCurrentPage(page)}
+          className={`px-4 py-2 rounded-xl border ${
+            currentPage === page
+              ? "bg-black text-white"
+              : "bg-white"
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+    {/* Next */}
+    <button
+      onClick={() =>
+        setCurrentPage((p) => Math.min(totalPages, p + 1))
+      }
+      className="px-4 py-2 bg-white border rounded-xl"
+    >
+      &gt;
+    </button>
+
+  </div>
+)}
 
       {/* BENEFITS */}
 
@@ -468,7 +524,7 @@ if (
 
         <p>
           Website:
-          www.khairashop25.web.id
+          www.ks25.my.id
         </p>
 
       </div>
