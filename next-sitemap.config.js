@@ -10,4 +10,4 @@ module.exports = {
       'https://www.ks25.my.id/sitemap.xml'
     ],
   },
-}
+} //fix
