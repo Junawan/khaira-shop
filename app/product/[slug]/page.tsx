@@ -4,7 +4,7 @@ import ProductDetailClient from "./ProductDetailClient";
 
 import { getProductBySlug } from "@/lib/product";
 import { Metadata } from "next";
-
+/*
 export async function generateMetadata({
   params,
 }: {
@@ -67,6 +67,7 @@ export async function generateMetadata({
     },
   };
 }
+  */
 
 export default async function ProductPage({
   params,
