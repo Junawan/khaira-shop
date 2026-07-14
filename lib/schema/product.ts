@@ -1,13 +1,7 @@
-export type ProductSchemaProps = {
-  product: {
-    id: string;
-    slug?: string;
-    name: string;
-    price: number;
-    image?: string;
-    images?: string[];
-    description?: string;
-  };
+import type { Product } from "@/lib/types/product";
+
+type ProductSchemaProps = {
+  product: Product;
 };
 
 export function createProductSchema({
@@ -25,11 +19,11 @@ export function createProductSchema({
 
     name: product.name,
 
+    image: [image],
+
     description:
       product.description ??
       product.name,
-
-    image: [image],
 
     sku: product.id,
 
@@ -37,6 +31,20 @@ export function createProductSchema({
       "@type": "Brand",
       name: "KhairaShop25",
     },
+
+    ...(product.rating &&
+    product.reviewCount
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+
+            ratingValue: product.rating,
+
+            reviewCount:
+              product.reviewCount,
+          },
+        }
+      : {}),
 
     offers: {
       "@type": "Offer",
@@ -49,6 +57,11 @@ export function createProductSchema({
 
       availability:
         "https://schema.org/InStock",
+
+      seller: {
+        "@type": "Organization",
+        name: "KhairaShop25",
+      },
     },
   };
 }

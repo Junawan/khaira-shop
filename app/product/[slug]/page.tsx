@@ -6,6 +6,7 @@ import { getProductBySlug } from "@/lib/product";
 import { Metadata } from "next";
 import Script from "next/script";
 import { createProductSchema } from "@/lib/schema/product";
+import { createBreadcrumbSchema } from "@/lib/schema/breadcrumb";
 
 export async function generateMetadata({
   params,
@@ -80,6 +81,24 @@ export default async function ProductPage({
   product,
 });
 
+const breadcrumbSchema =
+  createBreadcrumbSchema([
+    {
+      name: "Beranda",
+      url: "https://www.ks25.my.id",
+    },
+
+    {
+      name: "Produk",
+      url: "https://www.ks25.my.id",
+    },
+
+    {
+      name: product.name,
+      url: `https://www.ks25.my.id/product/${product.slug}`,
+    },
+  ]);
+
   return (
     <>
   <Script
@@ -90,6 +109,16 @@ export default async function ProductPage({
       __html: JSON.stringify(schema),
     }}
   />
+
+  <Script
+  id="breadcrumb-schema"
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(
+      breadcrumbSchema
+    ),
+  }}
+/>
 
   <ProductDetailClient
     initialProduct={product}
