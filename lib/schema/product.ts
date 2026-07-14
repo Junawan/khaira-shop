@@ -1,4 +1,5 @@
 import type { Product } from "@/lib/types/product";
+import { getEffectivePrice } from "@/lib/get-effective-price";
 
 type ProductSchemaProps = {
   product: Product;
@@ -12,8 +13,13 @@ export function createProductSchema({
     product.image ??
     "https://www.ks25.my.id/logo.png";
 
-  return {
-    "@context": "https://schema.org",
+    const effectivePrice =
+  getEffectivePrice(product);
+
+  console.log("SCHEMA PRICE:", effectivePrice);
+
+  const schema = {
+  "@context": "https://schema.org",
 
     "@type": "Product",
 
@@ -51,9 +57,9 @@ export function createProductSchema({
 
       url: `https://www.ks25.my.id/product/${product.slug}`,
 
-      price: product.price,
+      price: effectivePrice,
 
-      priceCurrency: "IDR",
+  priceCurrency: "IDR",
 
       availability:
         "https://schema.org/InStock",
@@ -63,5 +69,12 @@ export function createProductSchema({
         name: "KhairaShop25",
       },
     },
-  };
+};
+
+  console.log(
+  "SCHEMA JSON:",
+  JSON.stringify(schema, null, 2)
+);
+
+  return schema;
 }

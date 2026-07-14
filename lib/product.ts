@@ -16,6 +16,11 @@ export async function getProductBySlug(
 
   const doc = snapshot.docs[0];
   const data = doc.data();
+  console.log(JSON.stringify(data, null, 2));
+  console.log({
+  firestorePrice: data.price,
+  variants: data.variants,
+});
 
   return {
     id: doc.id,

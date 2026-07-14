@@ -109,6 +109,7 @@ export default function CategoryPage() {
                     src={product.image || "/placeholder.png"}
                     alt={product.name}
                     fill
+  sizes="80px"
                     className="object-cover rounded-xl"
                   />
                 </div>

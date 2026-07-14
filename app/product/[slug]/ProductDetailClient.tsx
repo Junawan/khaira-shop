@@ -27,6 +27,8 @@ import {
 import { Star } from "lucide-react";
 
 import Link from "next/link";
+import { getEffectivePrice } from "@/lib/get-effective-price";
+import type { Product } from "@/lib/types/product";
 
 type VariantValue = {
   value: string;
@@ -40,36 +42,6 @@ type Variant = {
   name: string;
 
   values: VariantValue[];
-};
-
-type Product = {
-  id?: string;
-
-  slug?: string;
-
-  name: string;
-
-  description?: string;
-
-  image?: string;
-
-  price: number;
-
-  images?: string[];
-
-  variants?: Variant[];
-
-  weight?: number;
-
-  length?: number;
-
-  width?: number;
-
-  height?: number;
-
-  rating?: number;
-  reviewCount?: number;
-  category?: string;
 };
 
 type Review = {
@@ -178,8 +150,8 @@ const [avgRating, setAvgRating] =
   }
 
   const finalPrice =
-    selectedVariant?.price ||
-    product.price;
+  selectedVariant?.price ??
+  getEffectivePrice(product);
 
   const handleAddToCart = (
   showAlert = true
@@ -273,7 +245,7 @@ const handleWhatsApp = () => {
   }
     alt={product.name}
     fill
-    sizes="(max-width: 768px) 100vw, 50vw"
+  sizes="(max-width:768px)100vw,50vw"
     className="object-cover"
   />
 ) : (
@@ -322,6 +294,7 @@ product.images.filter(Boolean).length > 0 && (
             src={img}
             alt={`thumb-${index}`}
             fill
+  sizes="80px"
             className="object-cover"
           />
 
