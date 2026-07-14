@@ -4,6 +4,8 @@ import ProductDetailClient from "./ProductDetailClient";
 
 import { getProductBySlug } from "@/lib/product";
 import { Metadata } from "next";
+import Script from "next/script";
+import { createProductSchema } from "@/lib/schema/product";
 
 export async function generateMetadata({
   params,
@@ -74,9 +76,24 @@ export default async function ProductPage({
     notFound();
   }
 
+  const schema = createProductSchema({
+  product,
+});
+
   return (
-    <ProductDetailClient
-      initialProduct={product}
-    />
+    <>
+  <Script
+    id="product-schema"
+    type="application/ld+json"
+    strategy="beforeInteractive"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(schema),
+    }}
+  />
+
+  <ProductDetailClient
+    initialProduct={product}
+  />
+</>
   );
 }
