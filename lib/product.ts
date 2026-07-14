@@ -15,9 +15,23 @@ export async function getProductBySlug(
   }
 
   const doc = snapshot.docs[0];
+  const data = doc.data();
 
   return {
     id: doc.id,
-    ...(doc.data() as Omit<Product, "id">),
+    slug: data.slug,
+    name: data.name,
+    price: data.price,
+    image: data.image,
+    images: data.images ?? [],
+    description: data.description,
+    variants: data.variants ?? [],
+    weight: data.weight,
+    length: data.length,
+    width: data.width,
+    height: data.height,
+    rating: data.rating,
+    reviewCount: data.reviewCount,
+    category: data.category,
   };
 }

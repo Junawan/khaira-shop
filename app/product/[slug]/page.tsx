@@ -4,7 +4,7 @@ import ProductDetailClient from "./ProductDetailClient";
 
 import { getProductBySlug } from "@/lib/product";
 import { Metadata } from "next";
-/*
+
 export async function generateMetadata({
   params,
 }: {
@@ -67,7 +67,6 @@ export async function generateMetadata({
     },
   };
 }
-  */
 
 export default async function ProductPage({
   params,
@@ -78,9 +77,13 @@ export default async function ProductPage({
 
   const product = await getProductBySlug(slug);
 
-return (
-  <pre>
-    {JSON.stringify(product, null, 2)}
-  </pre>
-);
+  if (!product) {
+    notFound();
+  }
+
+  return (
+    <ProductDetailClient
+      initialProduct={product}
+    />
+  );
 }
