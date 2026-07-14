@@ -79,7 +79,13 @@ type Review = {
   review: string;
 };
 
-export default function ProductDetailPage() {
+type ProductDetailClientProps = {
+  initialProduct: Product;
+};
+
+export default function ProductDetailClient({
+  initialProduct,
+}: ProductDetailClientProps) {
 
   const [reviews, setReviews] =
   useState<Review[]>([]);
@@ -96,10 +102,10 @@ const [avgRating, setAvgRating] =
     );
 
   const [product, setProduct] =
-    useState<Product | null>(null);
+  useState<Product | null>(initialProduct);
 
   const [loading, setLoading] =
-    useState(true);
+  useState(false);
 
   const [
   selectedVariant,
@@ -115,85 +121,45 @@ const [avgRating, setAvgRating] =
 ] = useState("");
 
   useEffect(() => {
-  const fetchProduct = async () => {
-  try {
-    const snapshot = await getDocs(collection(db, "products"));
+  const fetchReviews = async () => {
+    if (!initialProduct.id) return;
 
-    const slugParam = String(params.slug || "");
-
-    const docSnap = snapshot.docs.find((doc) => {
-      const data = doc.data();
-
-      return (
-        String(data.slug).trim().toLowerCase() ===
-        slugParam.trim().toLowerCase()
+    try {
+      const reviewQuery = query(
+        collection(db, "reviews"),
+        where("productId", "==", initialProduct.id)
       );
-    });
 
-    if (!docSnap) {
-      setProduct(null);
+      const reviewSnapshot = await getDocs(reviewQuery);
+
+      const reviewData = reviewSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Review, "id">),
+      }));
+
+      setReviews(reviewData);
+
+      if (initialProduct.images?.length) {
+        setSelectedImage(initialProduct.images[0]);
+      } else {
+        setSelectedImage(initialProduct.image || "");
+      }
+
+      if (
+        initialProduct.variants?.length &&
+        initialProduct.variants[0]?.values?.length
+      ) {
+        setSelectedVariant(
+          initialProduct.variants[0].values[0]
+        );
+      }
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    const data = docSnap.data();
-
-    const productData: Product = {
-      id: docSnap.id,
-      slug: data.slug || "",
-      name: data.name || "",
-      description: data.description || "",
-      image: data.image || "",
-      images: data.images || [],
-      price: data.price || 0,
-      variants: data.variants || [],
-      weight: data.weight || 0,
-      length: data.length || 0,
-      width: data.width || 0,
-      height: data.height || 0,
-      rating: data.rating || 0,
-      reviewCount: data.reviewCount || 0,
-      category: data.category || "",
-    };
-
-    setProduct(productData);
-
-    const reviewQuery = query(
-      collection(db, "reviews"),
-      where("productId", "==", docSnap.id)
-    );
-
-    const reviewSnapshot = await getDocs(reviewQuery);
-
-    const reviewData = reviewSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Review, "id">),
-    }));
-
-    setReviews(reviewData);
-
-    if (productData.images?.length) {
-      setSelectedImage(productData.images[0]);
-    } else {
-      setSelectedImage(productData.image || "");
-    }
-
-    if (
-      productData.variants?.length &&
-      productData.variants[0]?.values?.length
-    ) {
-      setSelectedVariant(productData.variants[0].values[0]);
-    }
-  } catch (error) {
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  fetchProduct();
-
-}, [params.slug]);
+  fetchReviews();
+}, [initialProduct]);
 
   if (loading) {
     return (
