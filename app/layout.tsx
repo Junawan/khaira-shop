@@ -1,8 +1,10 @@
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import type { Metadata } from "next";
-import Script from "next/script";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import Script from "next/script";
+import { organizationSchema } from "@/lib/schema/organization";
+import { websiteSchema } from "@/lib/schema/website";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ks25.my.id"),
@@ -59,6 +61,23 @@ export default function RootLayout({
     <html lang="id">
       <body>
         <GoogleAnalytics gaId="G-T41M3WJYL9" />
+        <Script
+    id="organization-schema"
+    type="application/ld+json"
+    strategy="afterInteractive"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(organizationSchema),
+    }}
+  />
+
+  <Script
+    id="website-schema"
+    type="application/ld+json"
+    strategy="afterInteractive"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(websiteSchema),
+    }}
+  />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
