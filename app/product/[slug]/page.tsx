@@ -78,13 +78,9 @@ export default async function ProductPage({
 
   const product = await getProductBySlug(slug);
 
-  if (!product) {
-    notFound();
-  }
-
-  return (
-    <ProductDetailClient
-      initialProduct={product}
-    />
-  );
+return (
+  <pre>
+    {JSON.stringify(product, null, 2)}
+  </pre>
+);
 }
