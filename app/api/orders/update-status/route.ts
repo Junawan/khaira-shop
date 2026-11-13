@@ -96,7 +96,7 @@ await orderRef.update({
   updatedAt: new Date(),
 });
 
-    const trackingUrl = `https://www.khairashop25.web.id/tracking/${order.orderId}`;
+    const trackingUrl = `https://www.ks25.my.id/tracking/${order.orderId}`;
 
     if (status === "paid") {
   if (order.phone) {
@@ -134,7 +134,7 @@ Toko sedang menyiapkan paket kamu ❤️`
       if (order.email) {
         await resend.emails.send({
           from:
-            "Khaira Shop <noreply@www.khairashop25.web.id>",
+            "Khaira Shop <noreply@www.ks25.my.id>",
 
           to: order.email,
 
@@ -193,7 +193,7 @@ ${trackingUrl}`
       if (order.email) {
         await resend.emails.send({
           from:
-            "Khaira Shop <noreply@www.khairashop25.web.id>",
+            "Khaira Shop <noreply@www.ks25.my.id>",
 
           to: order.email,
 
@@ -263,7 +263,7 @@ Terima kasih sudah belanja di Khaira Shop ❤️`
       if (order.email) {
         await resend.emails.send({
           from:
-            "Khaira Shop <noreply@www.khairashop25.web.id>",
+            "Khaira Shop <noreply@www.ks25.my.id>",
 
           to: order.email,
 

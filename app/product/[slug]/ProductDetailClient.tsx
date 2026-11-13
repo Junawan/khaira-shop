@@ -29,6 +29,7 @@ import { Star } from "lucide-react";
 import Link from "next/link";
 import { getEffectivePrice } from "@/lib/get-effective-price";
 import type { Product } from "@/lib/types/product";
+import { categorySlug } from "@/lib/category";
 
 type VariantValue = {
   value: string;
@@ -82,7 +83,9 @@ const [avgRating, setAvgRating] =
   const [
   selectedVariant,
   setSelectedVariant,
-] = useState<VariantValue | null>(null);
+] = useState<VariantValue | null>(
+  initialProduct.variants?.[0]?.values?.[0] ?? null
+);
 
   const [quantity, setQuantity] =
     useState(1);
@@ -90,7 +93,9 @@ const [avgRating, setAvgRating] =
     const [
   selectedImage,
   setSelectedImage,
-] = useState("");
+] = useState(
+  initialProduct.images?.[0] || initialProduct.image || ""
+);
 
   useEffect(() => {
   const fetchReviews = async () => {
@@ -338,7 +343,7 @@ product.images.filter(Boolean).length > 0 && (
   {product.category && (
   <div className="mb-2">
     <Link
-      href={`/kategori/${encodeURIComponent(product.category)}`}
+      href={`/kategori/${categorySlug(product.category)}`}
       className="text-sm text-blue-600 hover:underline"
     >
       {product.category}

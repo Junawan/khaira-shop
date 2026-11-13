@@ -1,0 +1,477 @@
+"use client";
+
+import Navbar from "@/components/Navbar";
+
+import ProductCard from "@/components/ProductCard";
+
+import Link from "next/link";
+
+import Image from "next/image";
+import { useMemo, useState } from "react";
+
+type CatalogProduct = {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  image?: string;
+};
+
+export default function HomeClient({
+  products,
+  categories,
+}: {
+  products: CatalogProduct[];
+  categories: string[];
+}) {
+  const [search, setSearch] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+const itemsPerPage = 20;
+
+  const filteredProducts = useMemo(
+    () =>
+      products.filter((product) =>
+        product.name.toLowerCase().includes(search.toLowerCase())
+      ),
+    [products, search]
+  );
+
+// pagination logic
+const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+const startIndex = (currentPage - 1) * itemsPerPage;
+
+const paginatedProducts = filteredProducts.slice(
+  startIndex,
+  startIndex + itemsPerPage
+);
+
+  return (
+    <main className="min-h-screen bg-[#faf7f2]">
+
+      <Navbar categories={categories} />
+
+      {/* SEARCH STICKY */}
+
+<div className="sticky top-[72px] z-40 bg-[#faf7f2]/95 backdrop-blur-md border-b border-gray-200">
+
+  <div className="max-w-7xl mx-auto px-6 py-4">
+
+    <div className="relative">
+
+      <input
+        type="text"
+        placeholder="Cari produk..."
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setCurrentPage(1);
+        }}
+        className="
+          w-full
+          bg-white
+          border
+          border-gray-300
+          rounded-2xl
+          px-5
+          py-4
+          text-sm
+          outline-none
+          focus:border-black
+          shadow-sm
+        "
+      />
+
+    </div>
+
+  </div>
+
+</div>
+
+      {/* PROMO BANNER */}
+
+<section className="px-6 pt-6">
+
+  <div className="max-w-7xl mx-auto">
+
+    <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-10 md:p-14 shadow-2xl">
+
+      {/* blur decoration */}
+      <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/20 rounded-full blur-3xl"></div>
+
+      <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-yellow-300/20 rounded-full blur-3xl"></div>
+
+      <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
+
+        {/* LEFT */}
+        <div>
+
+          <p className="uppercase tracking-[0.3em] text-white/80 text-sm font-semibold mb-4">
+
+            Belanja Lebih Hemat
+
+          </p>
+
+          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+
+            Harga Lebih Murah
+            Dari Marketplace
+
+          </h2>
+
+          <p className="mt-6 text-white/90 text-lg leading-8 max-w-xl">
+
+            Nikmati pengalaman belanja langsung tanpa biaya admin,
+            tanpa biaya layanan, dan harga lebih hemat untuk semua
+            perlengkapan baking favorit Anda.
+
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-4">
+
+            <div className="bg-white/15 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white font-medium">
+
+              ✅ Tanpa Biaya Admin
+
+            </div>
+
+            <div className="bg-white/15 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white font-medium">
+
+              ✅ Harga Lebih Murah
+
+            </div>
+
+            <div className="bg-white/15 backdrop-blur-md border border-white/20 px-5 py-3 rounded-2xl text-white font-medium">
+
+              ✅ Pengiriman Cepat
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex justify-center">
+
+          <Image
+            src="/logo-banner.png"
+            alt="KhairaShop25, toko perlengkapan baking"
+            width={384}
+            height={384}
+            priority
+            className="w-72 md:w-96 h-auto drop-shadow-2xl"
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+      {/* HERO */}
+
+      <section className="px-6 py-24 text-center">
+
+        <div className="max-w-4xl mx-auto">
+
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900">
+            Toko Loyang dan Peralatan Baking KhairaShop25
+          </h1>
+
+          <p className="mt-8 text-gray-600 text-lg md:text-xl leading-8 max-w-2xl mx-auto">
+
+            Temukan loyang premium,
+            alat baking berkualitas,
+            dan perlengkapan dapur terbaik
+            dengan harga terjangkau.
+
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4 flex-wrap">
+
+            <a
+              href="#products"
+              className="bg-black text-white px-8 py-4 rounded-2xl hover:opacity-90 transition"
+            >
+              Belanja Sekarang
+            </a>
+
+            <a
+              href="/cart"
+              className="bg-white border border-gray-300 px-8 py-4 rounded-2xl hover:bg-gray-100 transition"
+            >
+              Lihat Keranjang
+            </a>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* PRODUCTS */}
+
+      <section
+        id="products"
+        className="px-6 pb-24"
+      >
+
+        <div className="max-w-7xl mx-auto">
+
+          <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
+
+            <div>
+
+              <h2 className="text-4xl font-bold text-gray-900">
+
+                Produk Unggulan
+
+              </h2>
+
+              <p className="text-gray-500 mt-2">
+                Koleksi pilihan terbaik
+                untuk kebutuhan baking Anda
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* LOADING */}
+
+          {filteredProducts.length === 0 ? (
+            <div className="bg-white rounded-3xl p-10 text-center text-gray-500 shadow-sm">
+              Produk tidak ditemukan
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+
+              {paginatedProducts.map((product) => {
+
+                return (
+                  <Link
+                    key={product.id}
+                    href={`/product/${product.slug}`}
+                    className="group"
+                  >
+
+                    <div className="transform transition duration-300 group-hover:-translate-y-2">
+
+                      <ProductCard
+  name={product.name}
+  price={product.price}
+  image={product.image}
+/>
+
+                    </div>
+
+                  </Link>
+                );
+              })}
+
+            </div>
+          )}
+
+        </div>
+
+      </section>
+
+      {totalPages > 1 && (
+  <div className="flex items-center justify-center gap-2 mt-10 flex-wrap">
+
+    {/* Prev */}
+    <button
+      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+      className="px-4 py-2 bg-white border rounded-xl"
+    >
+      &lt;
+    </button>
+
+    {/* Pages */}
+    {Array.from({ length: totalPages }, (_, i) => i + 1)
+      .slice(
+        Math.max(0, currentPage - 3),
+        Math.min(totalPages, currentPage + 2)
+      )
+      .map((page) => (
+        <button
+          key={page}
+          onClick={() => setCurrentPage(page)}
+          className={`px-4 py-2 rounded-xl border ${
+            currentPage === page
+              ? "bg-black text-white"
+              : "bg-white"
+          }`}
+        >
+          {page}
+        </button>
+      ))}
+
+    {/* Next */}
+    <button
+      onClick={() =>
+        setCurrentPage((p) => Math.min(totalPages, p + 1))
+      }
+      className="px-4 py-2 bg-white border rounded-xl"
+    >
+      &gt;
+    </button>
+
+  </div>
+)}
+
+      {/* BENEFITS */}
+
+      <section className="px-6 pb-24">
+
+        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-6">
+
+          <div className="bg-white rounded-3xl p-8 shadow-sm">
+
+            <h3 className="text-xl font-bold mb-3">
+              Produk Berkualitas
+            </h3>
+
+            <p className="text-gray-600 leading-7">
+              Peralatan baking pilihan
+              dengan material premium
+              dan tahan lama.
+            </p>
+
+          </div>
+
+          <div className="bg-white rounded-3xl p-8 shadow-sm">
+
+            <h3 className="text-xl font-bold mb-3">
+              Pengiriman Cepat
+            </h3>
+
+            <p className="text-gray-600 leading-7">
+              Terintegrasi berbagai
+              ekspedisi dengan ongkir realtime.
+            </p>
+
+          </div>
+
+          <div className="bg-white rounded-3xl p-8 shadow-sm">
+
+            <h3 className="text-xl font-bold mb-3">
+              Pembayaran Aman
+            </h3>
+
+            <p className="text-gray-600 leading-7">
+              Mendukung QRIS,
+              Virtual Account,
+              dan e-wallet.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* FOOTER */}
+
+<footer className="bg-black text-white px-6 py-16">
+
+  <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
+
+    {/* BRAND */}
+    <div>
+
+      <h3 className="text-2xl font-bold mb-4">
+        KhairaShop25
+      </h3>
+
+      <p className="text-gray-300 leading-7">
+        Toko online perlengkapan baking,
+        loyang, dan kebutuhan dapur
+        berkualitas dengan harga lebih hemat.
+      </p>
+
+    </div>
+
+    {/* MENU */}
+    <div>
+
+      <h3 className="text-xl font-semibold mb-4">
+        Informasi
+      </h3>
+
+      <div className="flex flex-col gap-3">
+
+        <a
+          href="/tentang-kami"
+          className="text-gray-300 hover:text-white"
+        >
+          Tentang Kami
+        </a>
+
+        <a
+          href="/kebijakan-privasi"
+          className="text-gray-300 hover:text-white"
+        >
+          Kebijakan Privasi
+        </a>
+
+        <a
+          href="/syarat-ketentuan"
+          className="text-gray-300 hover:text-white"
+        >
+          Syarat & Ketentuan
+        </a>
+
+      </div>
+
+    </div>
+
+    {/* CONTACT */}
+    <div>
+
+      <h3 className="text-xl font-semibold mb-4">
+        Kontak
+      </h3>
+
+      <div className="space-y-3 text-gray-300">
+
+        <p>
+          WhatsApp:
+          085710255464
+        </p>
+
+        <p>
+          Email:
+          khairashop25@gmail.com
+        </p>
+
+        <p>
+          Website:
+          www.ks25.my.id
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div className="border-t border-white/10 mt-12 pt-6 text-center text-gray-400 text-sm">
+
+    © {new Date().getFullYear()} KhairaShop25.
+    All rights reserved.
+
+  </div>
+
+</footer>
+
+    </main>
+  );
+  // redeploy trigger
+}

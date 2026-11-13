@@ -1,6 +1,8 @@
 export type Product = {
   id: string;
 
+  active?: boolean;
+
   slug?: string;
 
   name: string;
@@ -18,6 +20,7 @@ export type Product = {
     values: {
       value: string;
       price: number;
+      stock?: number;
     }[];
   }[];
 
@@ -29,4 +32,5 @@ export type Product = {
   rating?: number;
   reviewCount?: number;
   category?: string;
+  stock?: number;
 };

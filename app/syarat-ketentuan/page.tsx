@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Syarat dan Ketentuan | KhairaShop25",
+  description:
+    "Syarat transaksi, pembayaran, dan pengiriman saat berbelanja di KhairaShop25.",
+  alternates: { canonical: "/syarat-ketentuan" },
+};
+
 export default function TermsPage() {
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">

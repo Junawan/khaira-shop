@@ -1,52 +1,34 @@
 import type { MetadataRoute } from "next";
+import { categorySlug } from "@/lib/category";
+import { getPublicProducts } from "@/lib/public-products";
 
-import { adminDb } from "@/lib/firebase-admin";
-
-function asDate(value: unknown): Date | undefined {
-  if (value && typeof value === "object" && "toDate" in value) {
-    const date = (value as { toDate: () => Date }).toDate();
-    return Number.isNaN(date.getTime()) ? undefined : date;
-  }
-
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? undefined : value;
-  }
-
-  if (typeof value === "string" || typeof value === "number") {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? undefined : date;
-  }
-
-  return undefined;
-}
+export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://www.ks25.my.id";
-
-  const snapshot = await adminDb.collection("products").get();
-  const products = snapshot.docs
-    .map((doc) => doc.data())
-    .filter((product) => product.slug)
-    .map((product) => {
-      const lastModified = asDate(product.updatedAt);
-
-      return {
-        url: `${baseUrl}/product/${product.slug}`,
-        ...(lastModified ? { lastModified } : {}),
-        changeFrequency: "weekly" as const,
-        priority: 0.8,
-      };
-    });
+  const products = await getPublicProducts();
+  const categoryMap = new Map<string, string>();
+  for (const product of products) {
+    if (!product.category?.trim()) continue;
+    const slug = categorySlug(product.category);
+    if (slug) categoryMap.set(slug, product.category);
+  }
+  const categories = Array.from(categoryMap.keys());
 
   return [
-    {
-      url: baseUrl,
-      changeFrequency: "daily",
-      priority: 1,
-    },
-    { url: `${baseUrl}/tentang-kami` },
-    { url: `${baseUrl}/kebijakan-privasi` },
-    { url: `${baseUrl}/syarat-ketentuan` },
-    ...products,
+    { url: baseUrl, changeFrequency: "daily", priority: 1 },
+    { url: `${baseUrl}/tentang-kami`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${baseUrl}/kebijakan-privasi`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${baseUrl}/syarat-ketentuan`, changeFrequency: "yearly", priority: 0.2 },
+    ...categories.map((slug) => ({
+      url: `${baseUrl}/kategori/${slug}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+    ...products.map((product) => ({
+      url: `${baseUrl}/product/${product.slug}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
   ];
 }

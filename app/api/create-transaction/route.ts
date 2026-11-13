@@ -181,7 +181,7 @@ Pembayaran:
 ${paymentMethod}
 
 Admin:
-https://www.khairashop25.web.id/admin/orders`
+https://www.ks25.my.id/admin/orders`
   );
 }
 
@@ -204,7 +204,7 @@ Status:
 Menunggu Pembayaran
 
 Cek status pesanan:
-https://www.khairashop25.web.id/tracking/${orderId}`
+https://www.ks25.my.id/tracking/${orderId}`
   );
 }
 

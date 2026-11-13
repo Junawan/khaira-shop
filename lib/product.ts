@@ -16,12 +16,7 @@ export async function getProductBySlug(
 
   const doc = snapshot.docs[0];
   const data = doc.data();
-  console.log(JSON.stringify(data, null, 2));
-  console.log({
-  firestorePrice: data.price,
-  variants: data.variants,
-});
-
+  if (data.active !== true) return null;
   return {
     id: doc.id,
     slug: data.slug,
@@ -38,5 +33,7 @@ export async function getProductBySlug(
     rating: data.rating,
     reviewCount: data.reviewCount,
     category: data.category,
+    stock: typeof data.stock === "number" ? data.stock : undefined,
+    active: true,
   };
 }

@@ -1,0 +1,62 @@
+import { cache } from "react";
+import { adminDb } from "@/lib/firebase-admin";
+import type { Product } from "@/lib/types/product";
+
+export type PublicProduct = Product & {
+  active: boolean;
+};
+
+function optionalNumber(value: unknown): number | undefined {
+  if (value === null || value === undefined || value === "") return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
+  const snapshot = await adminDb.collection("products").get();
+
+  return snapshot.docs
+    .map((doc) => {
+      const data = doc.data();
+      const variants = Array.isArray(data.variants)
+        ? data.variants.map((variant: any) => ({
+            name: String(variant?.name ?? ""),
+            values: Array.isArray(variant?.values)
+              ? variant.values.map((value: any) => ({
+                  value: String(value?.value ?? ""),
+                  price: optionalNumber(value?.price) ?? 0,
+                  stock: optionalNumber(value?.stock),
+                }))
+              : [],
+          }))
+        : [];
+
+      return {
+        id: doc.id,
+        active: data.active === true,
+        slug: typeof data.slug === "string" ? data.slug : undefined,
+        name: typeof data.name === "string" ? data.name : "",
+        price: optionalNumber(data.price) ?? 0,
+        image: typeof data.image === "string" ? data.image : undefined,
+        images: Array.isArray(data.images)
+          ? data.images.filter((image: unknown): image is string => typeof image === "string")
+          : undefined,
+        description:
+          typeof data.description === "string" ? data.description : undefined,
+        variants,
+        weight: optionalNumber(data.weight),
+        length: optionalNumber(data.length),
+        width: optionalNumber(data.width),
+        height: optionalNumber(data.height),
+        rating: optionalNumber(data.rating),
+        reviewCount: optionalNumber(data.reviewCount),
+        category: typeof data.category === "string" ? data.category : undefined,
+        stock: optionalNumber(data.stock),
+      } satisfies PublicProduct;
+    })
+    .filter(
+      (product) =>
+        product.active && Boolean(product.slug?.trim()) && Boolean(product.name.trim())
+    );
+});
+

@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/types/product";
-import { getEffectivePrice } from "@/lib/get-effective-price";
+import { getProductAvailability } from "@/lib/product-data";
 
 type ProductSchemaProps = {
   product: Product;
@@ -13,10 +13,12 @@ export function createProductSchema({
     product.image ??
     "https://www.ks25.my.id/logo.png";
 
-    const effectivePrice =
-  getEffectivePrice(product);
-
-  console.log("SCHEMA PRICE:", effectivePrice);
+  const initialVariantPrice = product.variants?.[0]?.values?.[0]?.price;
+  const effectivePrice =
+    typeof initialVariantPrice === "number" && initialVariantPrice > 0
+      ? initialVariantPrice
+      : product.price;
+  const availability = getProductAvailability(product);
 
   const schema = {
   "@context": "https://schema.org",
@@ -38,20 +40,6 @@ export function createProductSchema({
       name: "KhairaShop25",
     },
 
-    ...(product.rating &&
-    product.reviewCount
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-
-            ratingValue: product.rating,
-
-            reviewCount:
-              product.reviewCount,
-          },
-        }
-      : {}),
-
     offers: {
       "@type": "Offer",
 
@@ -59,10 +47,9 @@ export function createProductSchema({
 
       price: effectivePrice,
 
-  priceCurrency: "IDR",
+      priceCurrency: "IDR",
 
-      availability:
-        "https://schema.org/InStock",
+      ...(availability ? { availability } : {}),
 
       seller: {
         "@type": "Organization",
@@ -70,11 +57,6 @@ export function createProductSchema({
       },
     },
 };
-
-  console.log(
-  "SCHEMA JSON:",
-  JSON.stringify(schema, null, 2)
-);
 
   return schema;
 }

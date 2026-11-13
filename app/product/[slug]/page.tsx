@@ -4,7 +4,6 @@ import ProductDetailClient from "./ProductDetailClient";
 
 import { getProductBySlug } from "@/lib/product";
 import { Metadata } from "next";
-import Script from "next/script";
 import { createProductSchema } from "@/lib/schema/product";
 import { createBreadcrumbSchema } from "@/lib/schema/breadcrumb";
 
@@ -72,11 +71,6 @@ export default async function ProductPage({
   const { slug } = await params;
 
   const product = await getProductBySlug(slug);
-  console.log("SERVER PRODUCT", {
-  slug: product?.slug,
-  price: product?.price,
-});
-
   if (!product) {
     notFound();
   }
@@ -105,24 +99,21 @@ const breadcrumbSchema =
 
   return (
     <>
-  <Script
+  <script
     id="product-schema"
     type="application/ld+json"
-    strategy="beforeInteractive"
     dangerouslySetInnerHTML={{
-      __html: JSON.stringify(schema),
+      __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
     }}
   />
 
-  <Script
-  id="breadcrumb-schema"
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{
-    __html: JSON.stringify(
-      breadcrumbSchema
-    ),
-  }}
-/>
+  <script
+    id="breadcrumb-schema"
+    type="application/ld+json"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
+    }}
+  />
 
   <ProductDetailClient
     initialProduct={product}

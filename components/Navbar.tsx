@@ -17,8 +17,6 @@ import { auth } from "@/lib/firebase";
 import {
   doc,
   getDoc,
-  getDocs,
-  collection,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -35,19 +33,20 @@ import {
 } from "lucide-react";
 
 import { useRef } from "react";
+import { categorySlug } from "@/lib/category";
 
 
-export default function Navbar() {
+export default function Navbar({
+  categories,
+}: {
+  categories: string[];
+}) {
   const cart = useCartStore(
     (state) => state.cart
   );
 
   const [categoryOpen, setCategoryOpen] = useState(false);
-const [categories, setCategories] = useState<string[]>([]);
-
 const categoryRef = useRef<HTMLDivElement>(null);
-
-const [loadingCategories, setLoadingCategories] = useState(true);
 
   const [mobileMenuOpen, setMobileMenuOpen] =
   useState(false);
@@ -96,40 +95,6 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  const fetchCategories = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, "products"));
-
-      const allCategories = snapshot.docs
-        .map((doc) => {
-          const data = doc.data();
-
-          if (!data.active) return null; // hanya produk aktif
-          if (!data.category) return null;
-
-          return data.category.trim();
-        })
-        .filter(Boolean) as string[];
-
-      const uniqueCategories = Array.from(
-  new Set(
-    allCategories
-      .filter(Boolean)
-      .map((cat) => cat.trim())
-  )
-);
-
-      setCategories(uniqueCategories);
-      setLoadingCategories(false);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  fetchCategories();
-}, []);
-
-useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
     if (
       categoryRef.current &&
@@ -171,14 +136,14 @@ const [customerName, setCustomerName] =
   "
 />
 
-        <h1 className="
+        <span className="
   text-lg
   md:text-2xl
   font-bold
   text-gray-800
 ">
           KhairaShop25
-        </h1>
+        </span>
       </Link>
 
       {/* MOBILE MENU */}
@@ -253,13 +218,13 @@ const [customerName, setCustomerName] =
     <div className="absolute top-12 left-0 bg-white border rounded-xl shadow-md w-48 z-50">
       {categories.length === 0 ? (
         <p className="p-3 text-sm text-gray-500">
-          Loading...
+          Kategori belum tersedia
         </p>
       ) : (
         categories.map((cat) => (
           <Link
             key={cat}
-            href={`/kategori/${encodeURIComponent(cat)}`}
+            href={`/kategori/${categorySlug(cat)}`}
             onClick={() => setCategoryOpen(false)}
             className="block px-4 py-2 hover:bg-gray-100 text-sm"
           >
@@ -431,7 +396,7 @@ const [customerName, setCustomerName] =
   return (
     <Link
       key={cat}
-      href={`/kategori/${encodeURIComponent(cat)}`}
+      href={`/kategori/${categorySlug(cat)}`}
       onClick={() => setCategoryOpen(false)}
       className="block px-4 py-2 hover:bg-gray-100 text-sm"
     >

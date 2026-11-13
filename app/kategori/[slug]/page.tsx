@@ -1,131 +1,104 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import { notFound } from "next/navigation";
+import ProductCard from "@/components/ProductCard";
+import { categorySlug } from "@/lib/category";
+import { getPublicProducts } from "@/lib/public-products";
+import { getProductPrice } from "@/lib/product-data";
 
-type Product = {
-  id: string;
-  name: string;
-  image?: string;
-  price: number;
-  slug: string;
-  category?: string;
-};
+const baseUrl = "https://www.ks25.my.id";
 
-export default function CategoryPage() {
-  const params = useParams();
-  const slug = decodeURIComponent(params.slug as string);
+export const revalidate = 300;
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+async function getCategory(slug: string) {
+  const normalizedSlug = categorySlug(slug);
+  const products = await getPublicProducts();
+  const category = products.find(
+    (product) => product.category && categorySlug(product.category) === normalizedSlug
+  )?.category;
 
-  const getLowestPrice = (product: any) => {
-  if (product?.variants?.length > 0) {
-    const allPrices = product.variants.flatMap((v: any) =>
-      v.values.map((val: any) => val.price)
-    );
-
-    return Math.min(...allPrices);
-  }
-
-  return product.price || 0;
-};
-
-  useEffect(() => {
-    if (!slug) return;
-
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-
-        const snapshot = await getDocs(collection(db, "products"));
-
-        const data: Product[] = snapshot.docs.map((doc) => {
-          const d = doc.data();
-
-          return {
-            id: doc.id,
-            name: d.name || "",
-            slug: d.slug || "",
-            image: d.image || "",
-            price: d.price || 0,
-            category: d.category || "",
-            variants: d.variants || [],
-          };
-        });
-
-        const filtered = data.filter((p) => {
-          const productCategory = (p.category || "")
-            .trim()
-            .toLowerCase();
-
-          const currentSlug = slug.trim().toLowerCase();
-
-          return productCategory === currentSlug;
-        });
-
-        setProducts(filtered);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
+  return category
+    ? {
+        name: category,
+        products: products.filter(
+          (product) =>
+            product.category && categorySlug(product.category) === normalizedSlug
+        ),
       }
+    : null;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await getCategory(slug);
+
+  if (!category) {
+    return {
+      title: "Kategori Tidak Ditemukan | KhairaShop25",
+      robots: { index: false, follow: true },
     };
-
-    fetchProducts();
-  }, [slug]);
-
-  if (loading) {
-    return <div className="p-10">Loading...</div>;
   }
+
+  const title = `${category.name} | KhairaShop25`;
+  const description = `Belanja ${category.name.toLowerCase()} pilihan di KhairaShop25. Lihat produk, detail, dan harga terbaru.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `${baseUrl}/kategori/${categorySlug(slug)}` },
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/kategori/${categorySlug(slug)}`,
+      type: "website",
+    },
+  };
+}
+
+export default async function CategoryPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const category = await getCategory(slug);
+
+  if (!category) notFound();
 
   return (
     <main className="min-h-screen bg-[#faf7f2] p-6">
       <div className="max-w-6xl mx-auto">
+        <nav aria-label="Breadcrumb" className="mb-5 text-sm text-gray-600">
+          <Link href="/" className="underline">Beranda</Link>
+          <span className="mx-2">/</span>
+          <span>{category.name}</span>
+        </nav>
 
-        <h1 className="text-3xl font-bold mb-6">
-          Kategori:{" "}
-          {slug.charAt(0).toUpperCase() + slug.slice(1)}
-        </h1>
+        <h1 className="text-3xl font-bold mb-2">{category.name}</h1>
+        <p className="text-gray-600 mb-6">
+          Pilihan {category.name.toLowerCase()} dari KhairaShop25.
+        </p>
 
-        {products.length === 0 ? (
-          <p className="text-gray-500">
-            Tidak ada produk di kategori ini
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {products.map((product) => (
-              <Link
-                key={product.id}
-                href={`/product/${encodeURIComponent(product.slug)}`}
-                className="bg-white rounded-2xl p-3 shadow-sm"
-              >
-                <div className="relative w-full aspect-square">
-                  <Image
-                    src={product.image || "/placeholder.png"}
-                    alt={product.name}
-                    fill
-  sizes="80px"
-                    className="object-cover rounded-xl"
-                  />
-                </div>
-
-                <h2 className="mt-2 font-semibold text-sm">
-                  {product.name}
-                </h2>
-
-                <p className="text-green-600 font-bold">
-  Rp {getLowestPrice(product).toLocaleString()}
-</p>
-              </Link>
-            ))}
-          </div>
-        )}
-
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {category.products.map((product) => (
+            <Link
+              key={product.id}
+              href={`/product/${product.slug}`}
+              className="group"
+            >
+              <ProductCard
+                name={product.name}
+                price={getProductPrice(product)}
+                images={product.images}
+                image={product.image}
+              />
+            </Link>
+          ))}
+        </div>
       </div>
     </main>
   );
