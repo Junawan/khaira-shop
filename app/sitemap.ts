@@ -40,22 +40,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error(`[sitemap] ${duplicateSlugs.size} slug produk duplikat tidak dimasukkan: ${Array.from(duplicateSlugs).join(", ")}`);
   }
 
-  console.info(`[sitemap] Dibuat: ${4 + categories.length + uniqueProducts.size} URL; ${uniqueProducts.size} produk aktif unik, ${categories.length} kategori.`);
-
-  return [
+  const publicPages: MetadataRoute.Sitemap = [
     { url: baseUrl, changeFrequency: "daily", priority: 1 },
     { url: `${baseUrl}/tentang-kami`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/kebijakan-privasi`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${baseUrl}/syarat-ketentuan`, changeFrequency: "yearly", priority: 0.2 },
-    ...categories.map((slug) => ({
+  ];
+
+  const categoryPages: MetadataRoute.Sitemap = categories.map((slug) => ({
       url: `${baseUrl}/kategori/${slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.7,
-    })),
-    ...Array.from(uniqueProducts.values()).map((product) => ({
+  }));
+
+  const productPages: MetadataRoute.Sitemap = Array.from(uniqueProducts.values()).map((product) => ({
       url: `${baseUrl}/product/${product.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,
-    })),
-  ];
+  }));
+
+  console.info(`[sitemap] Dibuat: ${publicPages.length + categoryPages.length + productPages.length} URL; ${productPages.length} produk aktif unik, ${categoryPages.length} kategori.`);
+
+  return [...publicPages, ...categoryPages, ...productPages];
 }
