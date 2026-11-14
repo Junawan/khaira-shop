@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/site";
 
 import { adminDb } from "@/lib/firebase-admin";
 
@@ -96,7 +97,7 @@ await orderRef.update({
   updatedAt: new Date(),
 });
 
-    const trackingUrl = `https://www.ks25.my.id/tracking/${order.orderId}`;
+    const trackingUrl = `${SITE_URL}/tracking/${order.orderId}`;
 
     if (status === "paid") {
   if (order.phone) {

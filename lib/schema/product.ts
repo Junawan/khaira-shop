@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/site";
 import type { Product } from "@/lib/types/product";
 import { getProductAvailability } from "@/lib/product-data";
 
@@ -11,7 +12,7 @@ export function createProductSchema({
   const image =
     product.images?.[0] ??
     product.image ??
-    "https://www.ks25.my.id/logo.png";
+    `${SITE_URL}/logo.png`;
 
   const initialVariantPrice = product.variants?.[0]?.values?.[0]?.price;
   const effectivePrice =
@@ -43,7 +44,7 @@ export function createProductSchema({
     offers: {
       "@type": "Offer",
 
-      url: `https://www.ks25.my.id/product/${product.slug}`,
+      url: `${SITE_URL}/product/${product.slug}`,
 
       price: effectivePrice,
 

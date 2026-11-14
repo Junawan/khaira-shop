@@ -1,12 +1,14 @@
+import { SITE_URL } from "@/lib/site";
+
 export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": ["Organization", "Store"],
 
   name: "KhairaShop25",
 
-  url: "https://www.ks25.my.id",
+  url: SITE_URL,
 
-  logo: "https://www.ks25.my.id/logo.png",
+  logo: `${SITE_URL}/logo.png`,
 
   description:
     "KhairaShop25 menyediakan perlengkapan baking, loyang, cetakan kue, dan peralatan dapur berkualitas.",

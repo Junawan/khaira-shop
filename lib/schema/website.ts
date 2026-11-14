@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/site";
+
 export const websiteSchema = {
   "@context": "https://schema.org",
 
@@ -5,5 +7,5 @@ export const websiteSchema = {
 
   name: "KhairaShop25",
 
-  url: "https://www.ks25.my.id",
+  url: SITE_URL,
 };

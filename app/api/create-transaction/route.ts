@@ -1,6 +1,7 @@
 //api-create-transaction
 
 import { NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/site";
 import { adminDb } from "@/lib/firebase-admin";
 import { sendWhatsApp } from "@/lib/fonnte";
 
@@ -181,7 +182,7 @@ Pembayaran:
 ${paymentMethod}
 
 Admin:
-https://www.ks25.my.id/admin/orders`
+${SITE_URL}/admin/orders`
   );
 }
 
@@ -204,7 +205,7 @@ Status:
 Menunggu Pembayaran
 
 Cek status pesanan:
-https://www.ks25.my.id/tracking/${orderId}`
+${SITE_URL}/tracking/${orderId}`
   );
 }
 

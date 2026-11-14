@@ -5,8 +5,9 @@ import ProductCard from "@/components/ProductCard";
 import { categorySlug } from "@/lib/category";
 import { getPublicProducts } from "@/lib/public-products";
 import { getProductPrice } from "@/lib/product-data";
+import { SITE_URL } from "@/lib/site";
 
-const baseUrl = "https://www.ks25.my.id";
+const baseUrl = SITE_URL;
 
 export const revalidate = 300;
 

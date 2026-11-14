@@ -398,7 +398,7 @@ export async function GET(req: Request) {
     }
 
     page.drawText(
-      "Pengiriman melalui platform www.ks25.my.id",
+      "Pengiriman melalui platform khairashop25.my.id",
       {
         x: 90,
         y: 20,

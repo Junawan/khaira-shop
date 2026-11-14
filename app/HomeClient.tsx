@@ -453,7 +453,7 @@ const paginatedProducts = filteredProducts.slice(
 
         <p>
           Website:
-          www.ks25.my.id
+          khairashop25.my.id
         </p>
 
       </div>

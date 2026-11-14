@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { categorySlug } from "@/lib/category";
 import { getPublicProducts } from "@/lib/public-products";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://www.ks25.my.id";
+  const baseUrl = SITE_URL;
   let products: Awaited<ReturnType<typeof getPublicProducts>>;
   try {
     products = await getPublicProducts();

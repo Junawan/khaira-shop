@@ -6,6 +6,7 @@ import { getProductBySlug } from "@/lib/product";
 import { Metadata } from "next";
 import { createProductSchema } from "@/lib/schema/product";
 import { createBreadcrumbSchema } from "@/lib/schema/breadcrumb";
+import { SITE_URL } from "@/lib/site";
 
 export async function generateMetadata({
   params,
@@ -25,9 +26,9 @@ export async function generateMetadata({
   const image =
     product.images?.[0] ||
     product.image ||
-    "https://www.ks25.my.id/logo.png";
+    `${SITE_URL}/logo.png`;
 
-  const url = `https://www.ks25.my.id/product/${product.slug}`;
+  const url = `${SITE_URL}/product/${product.slug}`;
 
   return {
     title: `${product.name} | KhairaShop25`,
@@ -83,17 +84,17 @@ const breadcrumbSchema =
   createBreadcrumbSchema([
     {
       name: "Beranda",
-      url: "https://www.ks25.my.id",
+      url: SITE_URL,
     },
 
     {
       name: "Produk",
-      url: "https://www.ks25.my.id",
+      url: SITE_URL,
     },
 
     {
       name: product.name,
-      url: `https://www.ks25.my.id/product/${product.slug}`,
+      url: `${SITE_URL}/product/${product.slug}`,
     },
   ]);
 

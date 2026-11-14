@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/site";
 
 import { adminDb } from "@/lib/firebase-admin";
 
@@ -105,7 +106,7 @@ Status:
 ${status}
 
 Tracking:
-https://ks25.my.id/tracking/${order.orderId}`
+${SITE_URL}/tracking/${order.orderId}`
             );
           }
         }
@@ -188,7 +189,7 @@ Terima kasih sudah belanja di Khaira Shop ❤️`
                   </p>
 
                   <a
-                    href="https://ks25.my.id/review/${order.orderId}"
+                    href="${SITE_URL}/review/${order.orderId}"
                     style="
                       display:inline-block;
                       margin-top:20px;

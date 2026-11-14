@@ -165,11 +165,6 @@ export async function POST(req: Request) {
       JSON.stringify(result, null, 2)
     );
 
-    console.log(
-  "BITESHIP KEY:",
-  process.env.BITESHIP_API_KEY
-);
-
     if (!biteshipResponse.ok) {
       return NextResponse.json(
         {
