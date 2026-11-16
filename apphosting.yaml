@@ -7,8 +7,8 @@ runConfig:
   # cpu: 1
   # memoryMiB: 512
 
-# Environment variables and secrets.
-# env:
+  # Environment variables and secrets.
+  # env:
   # Configure environment variables.
   # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
   # - variable: MESSAGE
@@ -22,3 +22,70 @@ runConfig:
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
   # - variable: MY_SECRET
   #   secret: mySecretRef
+
+  # Public and non-secret app configuration
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyBRJfQVS2QmM2SSYjTBrWPRtKBTxnA3LTM"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "khairashop25-8c545.firebaseapp.com"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "khairashop25-8c545"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "khairashop25-8c545.firebasestorage.app"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "806481762783"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:806481762783:web:5c67289baee11b803f8c6a"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
+    value: "Mid-client-jAX3o3htudz-vpmw"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: CLOUDINARY_CLOUD_NAME
+    value: "dbajzss5v"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: ADMIN_WHATSAPP
+    value: "6285710255464"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: APP_FIREBASE_CLIENT_EMAIL
+    secret: FIREBASE_CLIENT_EMAIL
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: APP_FIREBASE_PRIVATE_KEY
+    secret: APP_FIREBASE_PRIVATE_KEY
+  - variable: MIDTRANS_SERVER_KEY
+    secret: MIDTRANS_SERVER_KEY
+  - variable: BITESHIP_API_KEY
+    secret: BITESHIP_API_KEY
+  - variable: FONNTE_TOKEN
+    secret: FONNTE_TOKEN
+  - variable: RESEND_API_KEY
+    secret: RESEND_API_KEY
+  - variable: CLOUDINARY_API_KEY
+    secret: CLOUDINARY_API_KEY
+  - variable: CLOUDINARY_API_SECRET
+    secret: CLOUDINARY_API_SECRET

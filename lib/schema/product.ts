@@ -1,6 +1,6 @@
 import { SITE_URL } from "@/lib/site";
 import type { Product } from "@/lib/types/product";
-import { getProductAvailability } from "@/lib/product-data";
+import { getProductAvailability, getProductPrice } from "@/lib/product-data";
 
 type ProductSchemaProps = {
   product: Product;
@@ -14,11 +14,7 @@ export function createProductSchema({
     product.image ??
     `${SITE_URL}/logo.png`;
 
-  const initialVariantPrice = product.variants?.[0]?.values?.[0]?.price;
-  const effectivePrice =
-    typeof initialVariantPrice === "number" && initialVariantPrice > 0
-      ? initialVariantPrice
-      : product.price;
+  const effectivePrice = getProductPrice(product);
   const availability = getProductAvailability(product);
 
   const schema = {
@@ -30,9 +26,7 @@ export function createProductSchema({
 
     image: [image],
 
-    description:
-      product.description ??
-      product.name,
+    description: product.description?.trim() || product.name,
 
     sku: product.id,
 

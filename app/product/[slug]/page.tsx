@@ -20,6 +20,7 @@ export async function generateMetadata({
   if (!product) {
     return {
       title: "Produk Tidak Ditemukan | KhairaShop25",
+      robots: { index: false, follow: true },
     };
   }
 
@@ -29,13 +30,14 @@ export async function generateMetadata({
     `${SITE_URL}/logo.png`;
 
   const url = `${SITE_URL}/product/${product.slug}`;
+  const description =
+    product.description?.replace(/\s+/g, " ").trim().slice(0, 160) ||
+    `${product.name} tersedia di KhairaShop25.`;
 
   return {
     title: `${product.name} | KhairaShop25`,
 
-    description:
-      product.description?.slice(0, 160) ??
-      `${product.name} tersedia di KhairaShop25.`,
+    description,
 
     alternates: {
       canonical: url,
@@ -45,8 +47,7 @@ export async function generateMetadata({
       type: "website",
       url,
       title: product.name,
-      description:
-        product.description?.slice(0, 160),
+      description,
       images: [
         {
           url: image,
@@ -57,8 +58,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: product.name,
-      description:
-        product.description?.slice(0, 160),
+      description,
       images: [image],
     },
   };
