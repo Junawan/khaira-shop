@@ -250,7 +250,8 @@ const handleWhatsApp = () => {
   }
     alt={product.name}
     fill
-  sizes="(max-width:768px)100vw,50vw"
+  sizes="(max-width: 768px) 100vw, 50vw"
+  unoptimized
     className="object-cover"
   />
 ) : (
@@ -300,6 +301,7 @@ product.images.filter(Boolean).length > 0 && (
             alt={`thumb-${index}`}
             fill
   sizes="80px"
+            unoptimized
             className="object-cover"
           />
 
