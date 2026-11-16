@@ -3,12 +3,14 @@
 import { useState } from "react";
 
 import {
-  addDoc,
   collection,
+  doc,
   serverTimestamp,
+  setDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { createProductSlug } from "@/lib/product-slug";
 
 import { useRouter } from "next/navigation";
 
@@ -117,19 +119,13 @@ export default function CreateProductPage() {
       try {
         setSaving(true);
 
-        await addDoc(
-          collection(
-            db,
-            "products"
-          ),
-          {
-            ...form,
-            createdAt:
-              serverTimestamp(),
-            updatedAt:
-              serverTimestamp(),
-          }
-        );
+        const productRef = doc(collection(db, "products"));
+        await setDoc(productRef, {
+          ...form,
+          slug: createProductSlug(form.name, productRef.id),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
 
         alert(
           "Produk berhasil dibuat"

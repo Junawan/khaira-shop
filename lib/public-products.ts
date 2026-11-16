@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
+import { createProductSlug } from "@/lib/product-slug";
 import type { Product } from "@/lib/types/product";
 
 export type PublicProduct = Product & {
@@ -34,7 +35,13 @@ export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
       return {
         id: doc.id,
         active: data.active === true,
-        slug: typeof data.slug === "string" ? data.slug : undefined,
+        slug:
+          typeof data.slug === "string" && data.slug.trim()
+            ? data.slug.trim()
+            : createProductSlug(
+                typeof data.name === "string" ? data.name : "",
+                doc.id
+              ),
         name: typeof data.name === "string" ? data.name : "",
         price: optionalNumber(data.price) ?? 0,
         image: typeof data.image === "string" ? data.image : undefined,
@@ -54,9 +61,6 @@ export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
         stock: optionalNumber(data.stock),
       } satisfies PublicProduct;
     })
-    .filter(
-      (product) =>
-        product.active && Boolean(product.slug?.trim()) && Boolean(product.name.trim())
-    );
+    .filter((product) => product.active && Boolean(product.name.trim()));
 });
 
