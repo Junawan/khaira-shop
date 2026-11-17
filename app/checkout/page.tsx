@@ -653,6 +653,21 @@ if (!profileComplete) {
                 className="w-full border rounded-xl px-4 py-3 h-24"
               />
 
+              <div className="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-amber-950 shadow-sm">
+                <p className="font-bold">Ongkir terasa mahal atau pesanan Anda banyak?</p>
+                <p className="mt-1 text-sm leading-6">
+                  Hubungi admin untuk menanyakan pilihan ongkir yang lebih fleksibel.
+                </p>
+                <a
+                  href="https://wa.me/6285710255464"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-600"
+                >
+                  Hubungi Admin via WhatsApp
+                </a>
+              </div>
+
               <button
                 onClick={
                   handleCheckShipping
