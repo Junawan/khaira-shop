@@ -428,6 +428,13 @@ const paginatedProducts = filteredProducts.slice(
           Syarat & Ketentuan
         </a>
 
+        <a
+          href="/sitemap"
+          className="text-gray-300 hover:text-white"
+        >
+          Peta Situs
+        </a>
+
       </div>
 
     </div>
