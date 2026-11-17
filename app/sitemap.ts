@@ -3,8 +3,8 @@ import { categorySlug } from "@/lib/category";
 import { getPublicProducts } from "@/lib/public-products";
 import { SITE_URL } from "@/lib/site";
 
-// Refresh the product and category URLs as the public catalog changes.
-export const revalidate = 300;
+// Cache the generated XML for one hour so requests do not query Firestore each time.
+export const revalidate = 3600;
 
 const generatedAt = "2026-11-17T09:14:02.000Z";
 const submittedUrls: MetadataRoute.Sitemap = [
