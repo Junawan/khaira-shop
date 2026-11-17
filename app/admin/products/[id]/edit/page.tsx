@@ -31,6 +31,8 @@ type Product = {
 
   image?: string;
 
+  images?: string[];
+
   description?: string;
 
   active?: boolean;
@@ -117,9 +119,13 @@ export default function EditProductPage() {
           if (
             snapshot.exists()
           ) {
-            setForm(
-              snapshot.data() as Product
-            );
+            const product = snapshot.data() as Product;
+            setForm({
+              ...product,
+              images: product.image
+                ? [product.image]
+                : product.images ?? [],
+            });
           }
         } catch (error) {
           console.log(error);
@@ -173,10 +179,11 @@ export default function EditProductPage() {
         return;
       }
 
-      setForm({
-        ...form,
+      setForm((current) => ({
+        ...current,
         image: data.url,
-      });
+        images: [data.url],
+      }));
     } catch (error) {
       console.log(error);
 

@@ -10,8 +10,8 @@ export function createProductSchema({
   product,
 }: ProductSchemaProps) {
   const image =
-    product.images?.[0] ??
     product.image ??
+    product.images?.[0] ??
     `${SITE_URL}/logo.png`;
 
   const effectivePrice = getProductPrice(product);

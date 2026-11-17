@@ -31,6 +31,10 @@ export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
               : [],
           }))
         : [];
+      const image =
+        typeof data.image === "string" && data.image.trim()
+          ? data.image
+          : undefined;
 
       return {
         id: doc.id,
@@ -44,10 +48,12 @@ export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
               ),
         name: typeof data.name === "string" ? data.name : "",
         price: optionalNumber(data.price) ?? 0,
-        image: typeof data.image === "string" ? data.image : undefined,
-        images: Array.isArray(data.images)
-          ? data.images.filter((image: unknown): image is string => typeof image === "string")
-          : undefined,
+        image,
+        images: image
+          ? [image]
+          : Array.isArray(data.images)
+            ? data.images.filter((item: unknown): item is string => typeof item === "string")
+            : undefined,
         description:
           typeof data.description === "string" ? data.description : undefined,
         variants,

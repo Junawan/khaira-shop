@@ -6,6 +6,20 @@ import { SITE_URL } from "@/lib/site";
 // Refresh the product and category URLs as the public catalog changes.
 export const revalidate = 300;
 
+const generatedAt = "2026-11-17T09:14:02.000Z";
+const submittedUrls: MetadataRoute.Sitemap = [
+  { url: SITE_URL, lastModified: generatedAt, priority: 1 },
+  {
+    url: `${SITE_URL}/product/loyang-pai-sus-bongkar-pasang-aluminium-diameter-14-16-18-20-22-24-cm-tebal-0-4-dan-0-6-mm-cseeorN3xXz0RDe4vVo1`,
+    lastModified: generatedAt,
+    priority: 0.8,
+  },
+  { url: `${SITE_URL}/tentang-kami`, lastModified: generatedAt, priority: 0.8 },
+  { url: `${SITE_URL}/kebijakan-privasi`, lastModified: generatedAt, priority: 0.8 },
+  { url: `${SITE_URL}/syarat-ketentuan`, lastModified: generatedAt, priority: 0.8 },
+  { url: `${SITE_URL}/kategori/loyang`, lastModified: generatedAt, priority: 0.64 },
+];
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const publicPages: MetadataRoute.Sitemap = [
     {
@@ -56,5 +70,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((image) => /^https?:\/\//i.test(image)),
   }));
 
-  return [...publicPages, ...categoryPages, ...productPages];
+  const urls = new Map<string, MetadataRoute.Sitemap[number]>();
+  for (const entry of [...publicPages, ...categoryPages, ...productPages, ...submittedUrls]) {
+    urls.set(entry.url, { ...urls.get(entry.url), ...entry });
+  }
+
+  return Array.from(urls.values());
 }

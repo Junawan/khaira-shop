@@ -94,7 +94,7 @@ const [avgRating, setAvgRating] =
   selectedImage,
   setSelectedImage,
 ] = useState(
-  initialProduct.images?.[0] || initialProduct.image || ""
+  initialProduct.image || initialProduct.images?.[0] || ""
 );
 
   useEffect(() => {
@@ -116,11 +116,9 @@ const [avgRating, setAvgRating] =
 
       setReviews(reviewData);
 
-      if (initialProduct.images?.length) {
-        setSelectedImage(initialProduct.images[0]);
-      } else {
-        setSelectedImage(initialProduct.image || "");
-      }
+      setSelectedImage(
+        initialProduct.image || initialProduct.images?.[0] || ""
+      );
 
       if (
         initialProduct.variants?.length &&
@@ -175,8 +173,8 @@ const [avgRating, setAvgRating] =
     price: Number(finalPrice),
 
     image:
-  product.images?.[0] ||
   product.image ||
+  product.images?.[0] ||
   "",
 
     quantity: Number(quantity),
@@ -264,15 +262,17 @@ const handleWhatsApp = () => {
 
 {/* THUMBNAILS */}
 
-{product.images &&
-product.images.filter(Boolean).length > 0 && (
+{[product.image, ...(product.images ?? [])].filter(Boolean).length > 0 && (
 
   <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
 
-    {product.images
-      .filter(
-        (img): img is string => Boolean(img)
+    {Array.from(
+      new Set(
+        [product.image, ...(product.images ?? [])].filter(
+          (img): img is string => Boolean(img)
+        )
       )
+    )
       .map((img, index) => (
 
         <button

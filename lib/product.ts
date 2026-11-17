@@ -12,7 +12,7 @@ function toProduct(id: string, data: FirebaseFirestore.DocumentData): Product {
     name,
     price: data.price,
     image: data.image,
-    images: data.images ?? [],
+    images: data.image ? [data.image] : data.images ?? [],
     description: data.description,
     variants: data.variants ?? [],
     weight: data.weight,

@@ -17,10 +17,7 @@ export default function ProductCard({
   images,
   image,
 }: ProductCardProps) {
-  const mainImage =
-  images && images.length > 0
-    ? images[0]
-    : image || "";
+  const mainImage = image || images?.find(Boolean) || "";
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition">

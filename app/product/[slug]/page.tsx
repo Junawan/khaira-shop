@@ -25,8 +25,8 @@ export async function generateMetadata({
   }
 
   const image =
-    product.images?.[0] ||
     product.image ||
+    product.images?.[0] ||
     `${SITE_URL}/logo.png`;
 
   const url = `${SITE_URL}/product/${product.slug}`;

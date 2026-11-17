@@ -16,7 +16,7 @@ export default async function HomePage() {
     slug: product.slug!,
     name: product.name,
     price: getProductPrice(product),
-    image: product.images?.[0] || product.image,
+    image: product.image || product.images?.[0],
   }));
   const categories = Array.from(
     new Set(
