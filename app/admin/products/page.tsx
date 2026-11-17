@@ -14,8 +14,8 @@ import {
   getDoc,
   updateDoc,
   onSnapshot,
-  orderBy,
   query,
+  writeBatch,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -25,9 +25,12 @@ import {
   Trash2,
   Plus,
   Search,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 import * as XLSX from "xlsx";
+import { sortByDisplayOrder } from "@/lib/product-order";
 
 type Product = {
   id: string;
@@ -54,6 +57,8 @@ type Product = {
   active?: boolean;
 
   featured?: boolean;
+
+  displayOrder?: number;
 };
 
 export default function AdminProductsPage() {
@@ -66,12 +71,11 @@ export default function AdminProductsPage() {
   const [search, setSearch] =
     useState("");
 
+  const [savingOrder, setSavingOrder] = useState(false);
+
   // REALTIME
   useEffect(() => {
-    const q = query(
-      collection(db, "products"),
-      orderBy("createdAt", "desc")
-    );
+    const q = query(collection(db, "products"));
 
     const unsubscribe =
       onSnapshot(q, (snapshot) => {
@@ -93,6 +97,61 @@ export default function AdminProductsPage() {
 
     return () => unsubscribe();
   }, []);
+
+  const activeProducts = sortByDisplayOrder(
+    products.filter((product) => product.active === true)
+  );
+  const inactiveProducts = products.filter((product) => product.active !== true);
+  const orderedProducts = [...activeProducts, ...inactiveProducts];
+
+  const handleMoveProduct = async (productId: string, direction: -1 | 1) => {
+    if (savingOrder || search.trim()) return;
+
+    const fromIndex = activeProducts.findIndex((product) => product.id === productId);
+    const toIndex = fromIndex + direction;
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= activeProducts.length) return;
+
+    const previousProducts = products;
+    const reordered = [...activeProducts];
+    [reordered[fromIndex], reordered[toIndex]] = [reordered[toIndex], reordered[fromIndex]];
+
+    const hasCompleteOrder = activeProducts.every((product) =>
+      Number.isFinite(product.displayOrder)
+    );
+    const orderUpdates = hasCompleteOrder
+      ? [
+          { product: reordered[fromIndex], displayOrder: fromIndex },
+          { product: reordered[toIndex], displayOrder: toIndex },
+        ]
+      : reordered.map((product, index) => ({ product, displayOrder: index }));
+    const updatedOrders = new Map(
+      orderUpdates.map(({ product, displayOrder }) => [product.id, displayOrder])
+    );
+
+    setProducts((current) =>
+      current.map((product) => {
+        const displayOrder = updatedOrders.get(product.id);
+        return displayOrder === undefined ? product : { ...product, displayOrder };
+      })
+    );
+    setSavingOrder(true);
+
+    try {
+      for (let offset = 0; offset < orderUpdates.length; offset += 450) {
+        const batch = writeBatch(db);
+        orderUpdates.slice(offset, offset + 450).forEach(({ product, displayOrder }) => {
+          batch.update(doc(db, "products", product.id), { displayOrder });
+        });
+        await batch.commit();
+      }
+    } catch (error) {
+      console.error("Gagal menyimpan urutan produk:", error);
+      setProducts(previousProducts);
+      alert("Urutan produk gagal disimpan. Silakan coba lagi.");
+    } finally {
+      setSavingOrder(false);
+    }
+  };
 
   const handleDownloadExcel =
 async () => {
@@ -332,7 +391,7 @@ const handleUploadExcel = async (
 
   // FILTER
   const filteredProducts =
-    products.filter((product) =>
+    orderedProducts.filter((product) =>
       product.name
         ?.toLowerCase()
         .includes(
@@ -456,6 +515,12 @@ const handleUploadExcel = async (
           />
 
         </div>
+
+        {search.trim() && (
+          <p className="-mt-5 mb-6 text-sm text-gray-500">
+            Hapus pencarian untuk mengatur urutan produk di beranda.
+          </p>
+        )}
 
         {/* EMPTY */}
 
@@ -588,6 +653,36 @@ const handleUploadExcel = async (
                       </div>
 
                     </div>
+
+                    {product.active && (
+                      <div className="mt-5 flex items-center justify-between rounded-2xl bg-orange-50 px-4 py-3">
+                        <span className="text-sm font-semibold text-orange-900">
+                          Urutan beranda #{activeProducts.findIndex((item) => item.id === product.id) + 1}
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveProduct(product.id, -1)}
+                            disabled={savingOrder || Boolean(search.trim()) || activeProducts[0]?.id === product.id}
+                            aria-label={`Naikkan ${product.name}`}
+                            title="Naikkan urutan"
+                            className="rounded-lg border border-orange-200 bg-white p-2 text-orange-900 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <ArrowUp size={18} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveProduct(product.id, 1)}
+                            disabled={savingOrder || Boolean(search.trim()) || activeProducts.at(-1)?.id === product.id}
+                            aria-label={`Turunkan ${product.name}`}
+                            title="Turunkan urutan"
+                            className="rounded-lg border border-orange-200 bg-white p-2 text-orange-900 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <ArrowDown size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* ACTION */}
 

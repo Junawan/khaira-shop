@@ -2,6 +2,7 @@ import HomeClient from "./HomeClient";
 import { getPublicProducts } from "@/lib/public-products";
 import { getProductPrice } from "@/lib/product-data";
 import type { Metadata } from "next";
+import { sortByDisplayOrder } from "@/lib/product-order";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const publicProducts = await getPublicProducts();
+  const publicProducts = sortByDisplayOrder(await getPublicProducts());
   const products = publicProducts.map((product) => ({
     id: product.id,
     slug: product.slug!,

@@ -65,6 +65,7 @@ export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
         reviewCount: optionalNumber(data.reviewCount),
         category: typeof data.category === "string" ? data.category : undefined,
         stock: optionalNumber(data.stock),
+        displayOrder: optionalNumber(data.displayOrder),
       } satisfies PublicProduct;
     })
     .filter((product) => product.active && Boolean(product.name.trim()));
