@@ -192,20 +192,25 @@ setProfileComplete(
         setLoadingShipping(true);
 
         const items = cart.map(
-          (item) => ({
+          (item) => {
+            const length = (item.length || 10) * item.quantity + 3;
+            const width = (item.width || 10) * item.quantity + 3;
+            const height = (item.height || 10) * item.quantity + 3;
+            const actualWeight = (item.weight || 1000) * item.quantity;
+            // L × W × H / 6000 menghasilkan kg; konversi ke gram untuk API ongkir.
+            const volumetricWeight = (length * width * height) / 6;
+
+            return {
             name: item.name,
-            value: item.price,
-            quantity: item.quantity,
-            weight:
-              (item.weight || 1000) *
-              item.quantity,
-            length:
-              item.length || 10,
-            width:
-              item.width || 10,
-            height:
-              item.height || 10,
-          })
+            value: item.price * item.quantity,
+            // Kirim sebagai satu paket gabungan agar API tidak mengalikan qty lagi.
+            quantity: 1,
+            weight: Math.ceil(Math.max(actualWeight, volumetricWeight)),
+            length,
+            width,
+            height,
+          };
+          }
         );
 
         const response =

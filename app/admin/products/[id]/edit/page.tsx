@@ -25,6 +25,11 @@ type Product = {
 
   stock: number;
 
+  weight?: number;
+  length?: number;
+  width?: number;
+  height?: number;
+
   type?: string;
 
   category?: string;
@@ -212,6 +217,7 @@ export default function EditProductPage() {
           productRef,
           {
             ...form,
+            weight: Number(form.weight || 0),
 
             updatedAt:
               new Date(),
@@ -536,6 +542,23 @@ export default function EditProductPage() {
           </div>
 
           )}
+
+          {/* UKURAN DAN BERAT PRODUK */}
+          <section className="rounded-2xl border border-gray-200 p-5">
+            <h2 className="font-semibold text-lg">Berat dan Ukuran Produk</h2>
+            <p className="mt-1 mb-4 text-sm text-gray-500">Masukkan ukuran dalam cm dan berat dalam gram. Berat dapat Anda tentukan sesuai kebutuhan.</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(["length", "width", "height"] as const).map((dimension) => (
+                <label key={dimension} className="text-sm font-medium capitalize">
+                  {dimension === "length" ? "Panjang (cm)" : dimension === "width" ? "Lebar (cm)" : "Tinggi (cm)"}
+                  <input type="number" min="0" step="0.1" value={form[dimension] ?? ""} onChange={(e) => setForm({ ...form, [dimension]: Number(e.target.value) })} className="mt-2 w-full border rounded-xl px-3 py-2" />
+                </label>
+              ))}
+              <label className="text-sm font-medium">Berat (gram)
+                <input type="number" min="0" step="1" value={form.weight ?? ""} onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })} className="mt-2 w-full border rounded-xl px-3 py-2" />
+              </label>
+            </div>
+          </section>
 
           {/* KATEGORI */}
 <div>

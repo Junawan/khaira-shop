@@ -59,6 +59,10 @@ type Product = {
   featured?: boolean;
 
   displayOrder?: number;
+  weight?: number;
+  length?: number;
+  width?: number;
+  height?: number;
 };
 
 export default function AdminProductsPage() {
@@ -178,6 +182,10 @@ async () => {
   variant: value.value,
   price: value.price,
   stock: value.stock,
+                weight: product.weight ?? 0,
+                length: product.length ?? 0,
+                width: product.width ?? 0,
+                height: product.height ?? 0,
 });
 
             }
@@ -195,6 +203,10 @@ async () => {
   variant: "",
   price: product.price,
   stock: product.stock,
+  weight: product.weight ?? 0,
+  length: product.length ?? 0,
+  width: product.width ?? 0,
+  height: product.height ?? 0,
 });
 
     }
@@ -249,6 +261,7 @@ const handleUploadExcel = async (
       );
 
     let updatedCount = 0;
+    const updatedProductIds = new Set<string>();
 
     for (const row of rows) {
 
@@ -266,6 +279,16 @@ const handleUploadExcel = async (
 
       const productData =
         productSnap.data();
+
+      const sourceLength = Number(row.length ?? productData.length ?? 0);
+      const sourceWidth = Number(row.width ?? productData.width ?? 0);
+      const sourceHeight = Number(row.height ?? productData.height ?? 0);
+      const length = sourceLength;
+      const width = sourceWidth;
+      const height = sourceHeight;
+      const parsedWeight = Number(row.weight ?? productData.weight ?? 0);
+      const weight = Number.isFinite(parsedWeight) ? parsedWeight : Number(productData.weight ?? 0);
+      const dimensions = { length, width, height, weight };
 
       // PRODUK VARIAN
       if (
@@ -312,32 +335,32 @@ const handleUploadExcel = async (
             })
           );
 
-        await updateDoc(
-  productRef,
-  {
-    variants: updatedVariants,
-    category: row.category || "",
-    updatedAt: new Date(),
-  }
-);
+        await updateDoc(productRef, {
+          variants: updatedVariants,
+          category: row.category || "",
+          ...dimensions,
+          updatedAt: new Date(),
+        });
 
       }
 
       // PRODUK TANPA VARIAN
       else {
 
-        await updateDoc(
-  productRef,
-  {
-    price: Number(row.price),
-    stock: Number(row.stock),
-    updatedAt: new Date(),
-  }
-);
+        await updateDoc(productRef, {
+          price: Number(row.price),
+          stock: Number(row.stock),
+          category: row.category || productData.category || "",
+          ...dimensions,
+          updatedAt: new Date(),
+        });
 
       }
 
-      updatedCount++;
+      if (!updatedProductIds.has(row.productId)) {
+        updatedProductIds.add(row.productId);
+        updatedCount++;
+      }
 
     }
 
@@ -467,7 +490,7 @@ const handleUploadExcel = async (
       cursor-pointer
     "
   >
-    Upload Excel
+    Update Masal Excel
 
     <input
       type="file"
@@ -478,6 +501,8 @@ const handleUploadExcel = async (
   </label>
 
 </div>
+
+          <p className="-mt-6 mb-8 text-sm text-gray-500">Unduh file produk, ubah berat (gram) dan ukuran (cm) secara manual, lalu unggah kembali untuk memperbarui data secara masal.</p>
 
           <Link
             href="/admin/products/create"
