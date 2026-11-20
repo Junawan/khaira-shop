@@ -5,6 +5,13 @@ import { Product } from "@/lib/types/product";
 function toProduct(id: string, data: FirebaseFirestore.DocumentData): Product {
   const name = typeof data.name === "string" ? data.name : "";
   const storedSlug = typeof data.slug === "string" ? data.slug.trim() : "";
+  const reviewCount = typeof data.reviewCount === "number" ? data.reviewCount : undefined;
+  const ratingSum = typeof data.ratingSum === "number" ? data.ratingSum : undefined;
+  const rating = reviewCount && reviewCount > 0
+    ? ratingSum !== undefined
+      ? ratingSum / reviewCount
+      : typeof data.rating === "number" ? data.rating : undefined
+    : undefined;
 
   return {
     id,
@@ -19,8 +26,9 @@ function toProduct(id: string, data: FirebaseFirestore.DocumentData): Product {
     length: data.length,
     width: data.width,
     height: data.height,
-    rating: data.rating,
-    reviewCount: data.reviewCount,
+    rating,
+    reviewCount,
+    ratingSum,
     category: data.category,
     stock: typeof data.stock === "number" ? data.stock : undefined,
     active: true,

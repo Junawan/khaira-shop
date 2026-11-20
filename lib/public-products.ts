@@ -35,6 +35,9 @@ export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
         typeof data.image === "string" && data.image.trim()
           ? data.image
           : undefined;
+      const reviewCount = optionalNumber(data.reviewCount);
+      const ratingSum = optionalNumber(data.ratingSum);
+      const storedRating = optionalNumber(data.rating);
 
       return {
         id: doc.id,
@@ -61,8 +64,13 @@ export const getPublicProducts = cache(async (): Promise<PublicProduct[]> => {
         length: optionalNumber(data.length),
         width: optionalNumber(data.width),
         height: optionalNumber(data.height),
-        rating: optionalNumber(data.rating),
-        reviewCount: optionalNumber(data.reviewCount),
+        rating: reviewCount && reviewCount > 0
+          ? ratingSum !== undefined
+            ? ratingSum / reviewCount
+            : storedRating
+          : undefined,
+        reviewCount,
+        ratingSum,
         category: typeof data.category === "string" ? data.category : undefined,
         stock: optionalNumber(data.stock),
         displayOrder: optionalNumber(data.displayOrder),

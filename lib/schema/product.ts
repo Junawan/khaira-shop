@@ -16,6 +16,8 @@ export function createProductSchema({
 
   const effectivePrice = getProductPrice(product);
   const availability = getProductAvailability(product);
+  const reviewCount = product.reviewCount;
+  const rating = product.rating;
 
   const schema = {
   "@context": "https://schema.org",
@@ -34,6 +36,18 @@ export function createProductSchema({
       "@type": "Brand",
       name: "KhairaShop25",
     },
+
+    ...(reviewCount && reviewCount > 0 && rating && rating > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: Number(rating.toFixed(2)),
+            reviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
 
     offers: {
       "@type": "Offer",

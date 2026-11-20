@@ -31,6 +31,7 @@ export type Product = {
 
   rating?: number;
   reviewCount?: number;
+  ratingSum?: number;
   category?: string;
   stock?: number;
   displayOrder?: number;
